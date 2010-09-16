@@ -71,14 +71,24 @@ Channel.build = function(tgt_win, tgt_origin, msg_scope) {
             error: function(error, message) {
                 completed = true;
                 // verify in table
+                if (!tranTbl[id]) throw "error called for non-existant message: " + id;
+                if (tranTbl[id].t !== 'in') throw "error called for message we *sent*.  that's not right";
+
                 // remove transaction from table
+                delete tranTbl[id];
+
                 // send error
+                postMessage({ id: id, error: error, message: message });
             },
             complete: function(v) {
                 completed = true;
                 // verify in table
+                if (!tranTbl[id]) throw "complete called for non-existant message: " + id;
+                if (tranTbl[id].t !== 'in') throw "complete called for message we *sent*.  that's not right";
                 // remove transaction from table
+                delete tranTbl[id];
                 // send complete
+                postMessage({ id: id, result: v });
             },
             delayReturn: function(delay) {
                 if (typeof delay === 'boolean') {
@@ -125,7 +135,6 @@ Channel.build = function(tgt_win, tgt_origin, msg_scope) {
 
         // now, what type of message is this?
         if (m.id && m.method) {
-            debug("got <"+m.method+"> request!");
             // a request!  do we have a registered handler for this request?
             if (regTbl[m.method]) {
                 var trans = createTransaction(m.id);
@@ -145,7 +154,7 @@ Channel.build = function(tgt_win, tgt_origin, msg_scope) {
                         // * if its an array of length two, then  array[0] is the code, array[1] is the error message
                         if (e && e instanceof Array && e.length == 2) {
                             error = e[0];
-                            message = e[2];
+                            message = e[1];
                         }
                         // * if its an object then we'll look form error and message parameters
                         else if (typeof e.error === 'string') {
@@ -164,17 +173,24 @@ Channel.build = function(tgt_win, tgt_origin, msg_scope) {
                             message = e.toString();
                         }
                     }
+
+                    trans.error(error,message);
                 }
                 handled = true;
             }
         } else if (m.id && m.update) {
-            debug("got update");
-        } else if (m.id && m.result) {
-            debug("got response");
-        } else if (m.id && m.error) {
-            debug("got error");
+        } else if (m.id && (m.result || m.error)) {
+            if (!tranTbl[m.id]) debug("received response with unrecognized id: " + m.id);
+            else if (tranTbl[m.id].t != 'out') debug("received response to message a request I did not send: " + m.id);
+            else {
+                handled = true;
+                // XXX: what if client code raises an exception here?
+                if (m.result) tranTbl[m.id].success(m.result);
+                else tranTbl[m.id].error(m.error, m.message);
+                delete tranTbl[m.id];
+            }
         } else if (m.method) {
-            debug("got <"+m.method+"> notification!");
+            // tis a notification.
             if (regTbl[m.method]) {
                 // yep, there's a handler for that.
                 // transaction is null for notifications.
@@ -244,7 +260,7 @@ Channel.build = function(tgt_win, tgt_origin, msg_scope) {
             postMessage({ id: curTranId, method: scopeMethod(m.method), params: m.params });
 
             // insert into the transaction table
-            tranTbl[m.id] = { t: 'out', error: m.error, success: m.success };
+            tranTbl[curTranId] = { t: 'out', error: m.error, success: m.success };
 
             // increment next id (by 2)
             curTranId += 2;
