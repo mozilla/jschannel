@@ -9,31 +9,112 @@
 
     1. load the jschannel.js messaging abstraction
     2. create an iframe holding child.html
-    3. establish a 
-     all sorts stuff, including the inputs and outputs to our functions --> 
+    3. establish a communication channel with the child
+    4. send a query, invoking the 'reverse' function of the child
+       on some parameters
+    5. interact a little bit more with the child to get a feel for how
+       everything works.
+     all sorts stuff, including the inputs and outputs to our functions
+
+--> 
 
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 <head>
+<title> JSChannel Examples </title>
+<style type="text/css" media="screen">
+#body {
+    font-family: georgia, 'bitstream vera serif', serif;
+}
+
+.output {
+  font-family: 'lucida console', monaco, 'andale mono', 'bitstream vera sans mono', consolas, monospace;
+  font-size: 80%;
+  border : 1px dashed grey;
+  padding: 10px;
+  margin-bottom: 20px;
+}
+</style>
 <!-- note, a debug version is also available to us, that would validate
      all sorts stuff, including the inputs and outputs to our functions --> 
 <script src="../src/jschannel.js"></script>
 </head>
 <body>
+
+<h2> JSChannel example </h2>
+<p>
+  Welcome to the JSChannel example page.  View source and you'll get an idea
+  of how you can get richer messaging semantics outta HTML5 cross document
+  messaging (a.k.a., window.postMessage) using this little javascript library.
+</p>
+
+First, here is basic function invocation:
+<div class="output" id="output1"></div>
+
+Next, here&apos;s error handling:
+<div class="output" id="output2"></div>
+
+Next, here&apos;s notification output:
+<div class="output" id="output3"></div>
+
+Finally, here&apos;s callback invocation output:
+<div class="output" id="output4"></div>
+
 <iframe style="display: none;" id="childId" src="child.html"></iframe>
 </body>
 <script>
 
+function docLog(which, m) {
+    var tag = 'output' + which.toString();
+    m = "> " + m;
+    var e = document.createElement('div');
+    e.innerText = m;
+    document.getElementById(tag).appendChild(e);
+}
+
 var chan = Channel.build(document.getElementById("childId").contentWindow, "*", "testScope");
+
+// first let's run a basic invocation
+docLog(1, "invoking reverse method with args 'hello world!'");
 chan.query({
     method: "reverse",
     params: "hello world!",
-    error: function(code, msg) {
-        console.log("error [" + code + "]: " + JSON.stringify(msg));
-    },
     success: function(v) {
-        console.log(v);
+        docLog(1, "function returns: '" + v + "'" );
     }
 });
+
+// let's screw up the arguments and see what happens
+docLog(2, "invoking reverse method again, now with bogus arguments");
+chan.query({
+    method: "reverse",
+    params: ["this is not a string"],
+    error: function(error, message) { docLog(2, "ERROR: " + error + " (" + message + ")"); },
+    success: function(v) { docLog(2, "function returns: '" + v + "'" ); }
+});
+
+// now let's make the child send us a notification.  She exports a single function
+// that will invoke a notification with the method 'notify'
+
+// step 1 is to bind a function to listen for the notification
+chan.bind("notify", function(t, s) { docLog(3, "got notification: " + s); });
+
+// step 2, invoke the function on our child which will cause him to send us a notification 
+chan.query({method: "sendNotification", success: function() { } });
+
+// finally, let's explore the 'callback' mechanism, which allows callbacks to be passed
+// *as arguments*, and the recipient may invoke these callbacks any number of times before
+// the completion of the function call.
+chan.query({
+    method: "charify",
+    params: {
+      gotChar: function(c) { docLog(4, "gotChar callback invoked: '" + c + "'"); },
+      startParse: function() { docLog(4, "word charification has begun!"); },
+      parseComplete: function() { docLog(4, "word charification has completed!"); },
+      word: "appelicious"
+    },
+    success: function(v) { docLog(4, "charify all done!" ); }
+});
+
 
 </script>
 </html>

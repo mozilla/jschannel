@@ -16,6 +16,18 @@ chan.bind("reverse", function(trans, s) {
     return s.split("").reverse().join("");
 });
 
+chan.bind("sendNotification", function(trans, s) {
+    chan.notify({method: "notify", params: "Hi my name is Simon, and I like to do drawings!" });
+});
+
+chan.bind("charify", function(trans, a) {
+    a.startParse();
+    for (var i = 0; i < a.word.length; i++) {
+        a.gotChar(a.word[i]);
+    }
+    a.parseComplete();
+});
+
 </script>
 </head>
 </html>

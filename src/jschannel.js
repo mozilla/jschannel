@@ -35,7 +35,7 @@ Channel.build = function(tgt_win, tgt_origin, msg_scope) {
     if (!window.JSON || !window.JSON.stringify || ! window.JSON.parse) throw("jschannel cannot run this browser, no native JSON handling");
 
     /* private variables */
-    // registrations: mapping method names to call objects  
+    // registrations: mapping method names to call objects
     var regTbl = { };
     // current (open) transactions
     var tranTbl = { };
@@ -59,14 +59,21 @@ Channel.build = function(tgt_win, tgt_origin, msg_scope) {
     }
     var whoami = child ? "child" : "parent";
 
-    var createTransaction = function(id) {
-        var shouldDelayReturn = false; 
+    var createTransaction = function(id,callbacks) {
+        var shouldDelayReturn = false;
         var completed = false;
 
         return {
-            update: function(v) {
+            invoke: function(cbName, v) {
                 // verify in table
-                // send update
+                if (!tranTbl[id]) throw "attempting to invoke a callback of a non-existant transaction: " + id;
+                // verify that the callback name is valid
+                var valid = false;
+                for (var i = 0; i < callbacks.length; i++) if (cbName === callbacks[i]) { valid = true; break; }
+                if (!valid) throw "request supports no such callback '" + cbName + "'";
+
+                // send callback invocation
+                postMessage({ id: id, callback: cbName, params: v});
             },
             error: function(error, message) {
                 completed = true;
@@ -137,9 +144,29 @@ Channel.build = function(tgt_win, tgt_origin, msg_scope) {
         if (m.id && m.method) {
             // a request!  do we have a registered handler for this request?
             if (regTbl[m.method]) {
-                var trans = createTransaction(m.id);
+                var trans = createTransaction(m.id, m.callbacks ? m.callbacks : [ ]);
                 tranTbl[m.id] = { t: 'in' };
                 try {
+                    // callback handling.  we'll magically create functions inside the parameter list for each
+                    // callback
+                    if (m.callbacks && m.callbacks instanceof Array && m.callbacks.length > 0) {
+                        for (var i = 0; i < m.callbacks.length; i++) {
+                            var path = m.callbacks[i];
+                            var obj = m.params;
+                            var pathItems = path.split('/');
+                            for (var j = 0; j < pathItems.length - 1; j++) {
+                                var cp = pathItems[j];
+                                if (typeof obj[cp] !== 'object') obj[cp] = { };
+                                obj = obj[cp];
+                            }
+                            obj[pathItems[pathItems.length - 1]] = (function() {
+                                var cbName = path;
+                                return function(params) {
+                                    return trans.invoke(cbName, params);
+                                }
+                            })();
+                        }
+                    }
                     var resp = regTbl[m.method](trans, m.params);
                     if (!trans.delayReturn() && !trans.completed()) trans.complete(resp);
                 } catch(e) {
@@ -178,7 +205,16 @@ Channel.build = function(tgt_win, tgt_origin, msg_scope) {
                 }
                 handled = true;
             }
-        } else if (m.id && m.update) {
+        } else if (m.id && m.callback) {
+            if (!tranTbl[m.id]) debug("received callback invocation with unrecognized transaction id: " + m.id);
+            else if (tranTbl[m.id].t != 'out') debug("received callback invocation for a request I did not send: " + m.id);
+            else if (!tranTbl[m.id].callbacks) debug("received callback invocation for a request without any callbacks: " + m.id);
+            else if (!tranTbl[m.id].callbacks[m.callback]) debug("transaction "+m.id+" has no such callback: " + m.callback);
+            else {
+                handled = true;
+                // XXX: what if client code raises an exception here?
+                tranTbl[m.id].callbacks[m.callback](m.params);
+            }
         } else if (m.id && (m.result || m.error)) {
             if (!tranTbl[m.id]) debug("received response with unrecognized id: " + m.id);
             else if (tranTbl[m.id].t != 'out') debug("received response to message a request I did not send: " + m.id);
@@ -194,7 +230,7 @@ Channel.build = function(tgt_win, tgt_origin, msg_scope) {
             if (regTbl[m.method]) {
                 // yep, there's a handler for that.
                 // transaction is null for notifications.
-                regTbl[m.method](null, m.data);
+                regTbl[m.method](null, m.params);
                 // if the client throws, we'll just let it bubble out
                 // what can we do?  Also, here we'll ignore return values
                 handled = true;
@@ -256,11 +292,33 @@ Channel.build = function(tgt_win, tgt_origin, msg_scope) {
             if (!m.method || typeof m.method !== 'string') throw "'method' argument to query must be string";
             if (!m.success || typeof m.success !== 'function') throw "'success' callback missing from query";
 
+            // now it's time to support the 'callback' feature of jschannel.  We'll traverse the argument
+            // object and pick out all of the functions that were passed as arguments.
+            var callbacks = { };
+            var callbackNames = [ ];
+
+            var pruneFunctions = function (path, obj) {
+                if (typeof obj === 'object') {
+                    for (var k in obj) {
+                        if (!obj.hasOwnProperty(k)) continue;
+                        var np = path + (path.length ? '/' : '') + k;
+                        if (typeof obj[k] === 'function') {
+                            callbacks[np] = obj[k];
+                            callbackNames.push(np);
+                            delete obj[k];
+                        } else if (typeof obj[k] === 'object') {
+                            pruneFunctions(np, obj[k]);
+                        }
+                    }
+                }
+            };
+            pruneFunctions("", m.params);
+
             // build a 'request' message and send it
-            postMessage({ id: curTranId, method: scopeMethod(m.method), params: m.params });
+            postMessage({ id: curTranId, method: scopeMethod(m.method), params: m.params, callbacks: callbackNames });
 
             // insert into the transaction table
-            tranTbl[curTranId] = { t: 'out', error: m.error, success: m.success };
+            tranTbl[curTranId] = { t: 'out', callbacks: callbacks, error: m.error, success: m.success };
 
             // increment next id (by 2)
             curTranId += 2;
