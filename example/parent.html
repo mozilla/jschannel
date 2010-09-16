@@ -1,13 +1,25 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
           "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<!--
+
+    The 'parent' frame is really the guy who kicks off this dance.
+    He'll do the following to demonstrate the basic functioning
+    of jschannel:
+
+    1. load the jschannel.js messaging abstraction
+    2. create an iframe holding child.html
+    3. establish a 
+     all sorts stuff, including the inputs and outputs to our functions --> 
+
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 <head>
 <!-- note, a debug version is also available to us, that would validate
      all sorts stuff, including the inputs and outputs to our functions --> 
-<script src="js_channel.js"></script>
+<script src="../src/jschannel.js"></script>
 </head>
 <body>
-<iframe id="childId" src="child.html"></iframe>
+<iframe style="display: none;" id="childId" src="child.html"></iframe>
 </body>
 <script>
 
