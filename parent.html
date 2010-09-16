@@ -1,0 +1,27 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+          "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<!-- note, a debug version is also available to us, that would validate
+     all sorts stuff, including the inputs and outputs to our functions --> 
+<script src="js_channel.js"></script>
+</head>
+<body>
+<iframe id="childId" src="child.html"></iframe>
+</body>
+<script>
+
+var chan = Channel.build(document.getElementById("childId").contentWindow, "*", "testScope");
+chan.query({
+    method: "reverse",
+    params: "hello world!",
+    error: function(code, msg) {
+        console.log("error [" + code + "]: " + JSON.stringify(msg));
+    },
+    success: function(v) {
+        console.log(v);
+    }
+});
+
+</script>
+</html>

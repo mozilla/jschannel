@@ -1,0 +1,268 @@
+/**
+ * js_channel is a very lightweight abstraction on top of
+ * postMessage which defines message formats and semantics
+ * to support interactions more rich than just message passing
+ * js_channel supports:
+ *  + query/response - traditional rpc
+ *  + query/update/response - incremental async return of results
+ *    to a query
+ *  + notifications - fire and forget
+ *  + error handling
+ *
+ * js_channel is based heavily on json-rpc, but is focused at the
+ * problem of inter-iframe RPC.
+ */
+
+;Channel = { }
+/* a messaging channel is constructed from a window and an origin.
+ * the channel will assert that all messages received over the
+ * channel match the origin */
+Channel.build = function(tgt_win, tgt_origin, msg_scope) {
+    var debug = function(m) {
+        if (window.console && window.console.log) {
+            // try to stringify, if it doesn't work we'll let javascript's built in toString do its magic
+            try { if (typeof m !== 'string') m = JSON.stringify(m); } catch(e) { }
+            console.log("["+whoami+"] " + m);
+        }
+    }
+
+    /* basic argument validation */
+    if (!tgt_win) throw("Channel.build() called without a valid window argument");
+    if (!typeof tgt_origin === 'string') throw ("Channel.build() called without a string origin argment");
+
+    /* browser capabilities check */
+    if (!tgt_win.postMessage) throw("jschannel cannot run this browser, no postMessage");
+    if (!window.JSON || !window.JSON.stringify || ! window.JSON.parse) throw("jschannel cannot run this browser, no native JSON handling");
+
+    /* private variables */
+    // registrations: mapping method names to call objects  
+    var regTbl = { };
+    // current (open) transactions
+    var tranTbl = { };
+    // current transaction id
+    var curTranId = 1000;
+    var remoteOrigin = tgt_origin;
+    // are we ready yet?  when false we will block outbound messages.
+    var ready = false;
+    var pendingQueue = [ ];
+    var child = false;
+
+    // we assume that Channel will always be used for communication between two iframes in a
+    // parent/child relationship.  would we ever be wrong?
+    if (tgt_win == window.parent) {
+        // children are odd, parents are even
+        curTranId++;
+        ready = true;
+        child = true; // XXX: do we really care?  How much checking do we want in the works?
+    } else {
+        ready = false;
+    }
+    var whoami = child ? "child" : "parent";
+
+    var createTransaction = function(id) {
+        var shouldDelayReturn = false; 
+        var completed = false;
+
+        return {
+            update: function(v) {
+                // verify in table
+                // send update
+            },
+            error: function(error, message) {
+                completed = true;
+                // verify in table
+                // remove transaction from table
+                // send error
+            },
+            complete: function(v) {
+                completed = true;
+                // verify in table
+                // remove transaction from table
+                // send complete
+            },
+            delayReturn: function(delay) {
+                if (typeof delay === 'boolean') {
+                    shouldDelayReturn = (delay === true);
+                }
+                return shouldDelayReturn;
+            },
+            completed: function() {
+                return completed;
+            }
+        };
+    }
+
+    var onMessage = function(e) {
+        var handled = false;
+        debug("got message: " + JSON.stringify(e.data));
+        // validate event origin
+        if (tgt_origin !== '*' && tgt_origin !== e.origin) {
+            debug("dropping message, origin mismatch! '" + tgt_origin + "' !== '" + e.origin + "'");
+            return;
+        }
+
+        // messages must be objects
+        // XXX: should we explicitly JSON.parse/stringify for better browser support?
+        var m = e.data;
+        if (typeof m !== 'object') {
+            debug("message is not object, dropping: " + m);
+            return;
+        }
+
+        // first, descope method if it needs it
+        if (m.method && msg_scope) {
+            var ar = m.method.split('::');
+            if (ar.length != 2) {
+                debug("dropping message: has unscoped method name, I expect scoping to '" + msg_scope + "'");
+                return;
+            }
+            if (ar[0] !== msg_scope) {
+                debug("dropping message: out of scope: '" + ar[0] + "' !== '" + msg_scope + "'");
+                return;
+            }
+            m.method = ar[1];
+        }
+
+        // now, what type of message is this?
+        if (m.id && m.method) {
+            debug("got <"+m.method+"> request!");
+            // a request!  do we have a registered handler for this request?
+            if (regTbl[m.method]) {
+                var trans = createTransaction(m.id);
+                tranTbl[m.id] = { t: 'in' };
+                try {
+                    var resp = regTbl[m.method](trans, m.params);
+                    if (!trans.delayReturn() && !trans.completed()) trans.complete(resp);
+                } catch(e) {
+                    // automagic handling of exceptions:
+                    var error = "runtime_error";
+                    var message = null;
+                    // * if its a string then it gets an error code of 'runtime_error' and string is the message
+                    if (typeof e === 'string') {
+                        message = e;
+                    } else if (typeof e === 'object') {
+                        // either an array or an object
+                        // * if its an array of length two, then  array[0] is the code, array[1] is the error message
+                        if (e && e instanceof Array && e.length == 2) {
+                            error = e[0];
+                            message = e[2];
+                        }
+                        // * if its an object then we'll look form error and message parameters
+                        else if (typeof e.error === 'string') {
+                            error = e.error;
+                            if (!e.message) message = "";
+                            else if (typeof e.message === 'string') messasge = e.message;
+                            else e = e.message; // let the stringify/toString message give us a reasonable verbose error string
+                        }
+                    }
+
+                    // message is *still* null, let's try harder
+                    if (message === null) {
+                        try {
+                            message = JSON.stringify(e);
+                        } catch (e2) {
+                            message = e.toString();
+                        }
+                    }
+                }
+                handled = true;
+            }
+        } else if (m.id && m.update) {
+            debug("got update");
+        } else if (m.id && m.result) {
+            debug("got response");
+        } else if (m.id && m.error) {
+            debug("got error");
+        } else if (m.method) {
+            debug("got <"+m.method+"> notification!");
+            if (regTbl[m.method]) {
+                // yep, there's a handler for that.
+                // transaction is null for notifications.
+                regTbl[m.method](null, m.data);
+                // if the client throws, we'll just let it bubble out
+                // what can we do?  Also, here we'll ignore return values
+                handled = true;
+            }
+        }
+
+        if (handled) {
+            // we got it, hands off.
+            e.stopPropagation();
+            debug("message handled");
+        } else {
+            debug("this channel can't handle that event, sorry");
+        }
+    }
+
+    // scope method names based on msg_scope specified when the Channel was instantiated 
+    var scopeMethod = function(m) {
+        if (typeof msg_scope === 'string' && msg_scope.length) m = [msg_scope, m].join("::");
+        return m;
+    }
+
+    // a small wrapper around postmessage whose primary function is to handle the
+    // case that clients start sending messages before the other end is "ready"
+    var postMessage = function(msg) {
+        if (!msg) throw "postMessage called with null message";
+
+        // delay posting if we're not ready yet.
+        var verb = (ready ? "posting" : "queueing"); 
+        debug(verb + " message (" + msg.id + ") |" + msg.method + "|(" + JSON.stringify(msg));
+        if (!ready) pendingQueue.push(msg);
+        else tgt_win.postMessage(msg, remoteOrigin);
+    }
+
+    // called on the parent once readiness is achieved
+    var onReady = function(trans, e) {
+        // trans will be null
+        ready = true;
+        while (pendingQueue.length) {
+            tgt_win.postMessage(pendingQueue.pop(), remoteOrigin);
+        }
+        obj.unbind("__ready");
+    };
+
+    // Setup postMessage event listeners
+    if (window.addEventListener) window.addEventListener('message', onMessage, false);
+    else if(window.attachEvent) window.attachEvent('onmessage', onMessage);
+
+    var obj = {
+        unbind: function (method) { },
+        bind: function (method, cb) {
+            if (!method || typeof method !== 'string') throw "'method' argument to bind must be string";
+            if (!cb || typeof cb !== 'function') throw "callback missing from bind params";
+
+            if (regTbl[method]) throw "method '"+method+"' is already bound!";
+            regTbl[method] = cb;
+        },
+        query: function(m) {
+            if (!m) throw 'missing arguments to query function';
+            if (!m.method || typeof m.method !== 'string') throw "'method' argument to query must be string";
+            if (!m.success || typeof m.success !== 'function') throw "'success' callback missing from query";
+
+            // build a 'request' message and send it
+            postMessage({ id: curTranId, method: scopeMethod(m.method), params: m.params });
+
+            // insert into the transaction table
+            tranTbl[m.id] = { t: 'out', error: m.error, success: m.success };
+
+            // increment next id (by 2)
+            curTranId += 2;
+        },
+        notify: function(m) {
+            if (!m) throw 'missing arguments to notify function';
+            if (!m.method || typeof m.method !== 'string') throw "'method' argument to notify must be string";
+
+            // no need to go into any transaction table 
+            postMessage({ method: scopeMethod(m.method), params: m.params });
+        }
+    };
+
+    if (child) {
+        obj.notify({ method: '__ready' });
+    } else {
+        obj.bind('__ready', onReady);
+    }
+    debug('loaded');
+    return obj;
+}
