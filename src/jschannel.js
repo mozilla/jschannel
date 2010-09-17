@@ -22,7 +22,7 @@ Channel.build = function(tgt_win, tgt_origin, msg_scope) {
         if (window.console && window.console.log) {
             // try to stringify, if it doesn't work we'll let javascript's built in toString do its magic
             try { if (typeof m !== 'string') m = JSON.stringify(m); } catch(e) { }
-            console.log("["+whoami+"] " + m);
+            console.log("["+chanId+"] " + m);
         }
     }
 
@@ -53,30 +53,26 @@ Channel.build = function(tgt_win, tgt_origin, msg_scope) {
     }
 
     /* private variables */
+    // generate a random and psuedo unique id for this channel
+    var chanId = (function ()
+    {
+        var text = "";
+        var alpha = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        for(var i=0; i < 5; i++) text += alpha.charAt(Math.floor(Math.random() * alpha.length));
+        return text;
+    })();
+
     // registrations: mapping method names to call objects
     var regTbl = { };
 
     // current (open) transactions
     var tranTbl = { };
-    // current transaction id
-    var curTranId = 1000;
+    // current transaction id, start out at a random *odd* number between 1 and a million
+    var curTranId = Math.floor(Math.random()*1000001) | 1;
     var remoteOrigin = tgt_origin;
     // are we ready yet?  when false we will block outbound messages.
     var ready = false;
     var pendingQueue = [ ];
-    var child = false;
-
-    // we assume that Channel will always be used for communication between two iframes in a
-    // parent/child relationship.  would we ever be wrong?
-    if (tgt_win == window.parent) {
-        // children are odd, parents are even
-        curTranId++;
-        ready = true;
-        child = true; // XXX: do we really care?  How much checking do we want in the works?
-    } else {
-        ready = false;
-    }
-    var whoami = child ? "child" : "parent";
 
     var createTransaction = function(id,callbacks) {
         var shouldDelayReturn = false;
@@ -273,19 +269,30 @@ Channel.build = function(tgt_win, tgt_origin, msg_scope) {
 
         // delay posting if we're not ready yet.
         var verb = (ready ? "posting" : "queueing"); 
-        debug(verb + " message (" + msg.id + ") |" + msg.method + "|(" + JSON.stringify(msg));
+        debug(verb + " message: " + JSON.stringify(msg));
         if (!ready) pendingQueue.push(msg);
         else tgt_win.postMessage(JSON.stringify(msg), remoteOrigin);
     }
 
-    // run once the other side declares themselves ready
-    var onReady = function(trans, args) {
-        while (pendingQueue.length) {
-            tgt_win.postMessage(JSON.stringify(pendingQueue.pop()), remoteOrigin);
+    var onReady = function(trans, type) {
+        debug('ready msg received');
+        if (ready) throw "received ready message while in ready state.  help!";
+
+        if (type === 'ping') {
+            chanId += '-R';
+            curTranId = curTranId+(curTranId%2);
+        } else {
+            chanId += '-L';
         }
+
+        obj.unbind('__ready'); // now this handler isn't needed any more.
         ready = true;
-        // don't respond to responses, lest the din become unbearable
-        if (args !== 'pong') obj.notify({ method: '__ready', params: "pong"});
+        debug('ready msg accepted.  starting transaction id: ' + curTranId);
+
+        if (type === 'ping') obj.notify({ method: '__ready', params: 'pong' });
+
+        // flush queue
+        while (pendingQueue.length) postMessage(pendingQueue.pop(), remoteOrigin);
     };
 
     // Setup postMessage event listeners
@@ -354,7 +361,7 @@ Channel.build = function(tgt_win, tgt_origin, msg_scope) {
     };
 
     obj.bind('__ready', onReady);
-    ready = true; obj.notify({ method: '__ready', params: 'ping' }); ready = false;
-    debug('channel loaded.');
+    ready = true; obj.notify({ method: '__ready', params: "ping" });  ready = false;
+
     return obj;
 }
