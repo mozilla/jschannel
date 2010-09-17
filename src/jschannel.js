@@ -26,17 +26,32 @@ Channel.build = function(tgt_win, tgt_origin, msg_scope) {
         }
     }
 
-    /* basic argument validation */
-    if (!tgt_win) throw("Channel.build() called without a valid window argument");
-    if (!typeof tgt_origin === 'string') throw ("Channel.build() called without a string origin argment");
-
     /* browser capabilities check */
-    if (!tgt_win.postMessage) throw("jschannel cannot run this browser, no postMessage");
+    if (!window.postMessage) throw("jschannel cannot run this browser, no postMessage");
     if (!window.JSON || !window.JSON.stringify || ! window.JSON.parse) throw("jschannel cannot run this browser, no native JSON handling");
+
+    /* basic argument validation */
+    if (!tgt_win || !tgt_win.postMessage) throw("Channel.build() called without a valid window argument");
+    // let's require that the client specify an origin.  if we just assume '*' we'll be
+    // propagating unsafe practices.  that would be lame.
+    if (typeof tgt_origin !== 'string' || 
+        // allow '*'
+        (tgt_origin !== "*" &&
+        // allow valid domains under http and https (a simple loose check)
+         !tgt_origin.match(/^https?:\/\/([-a-zA-Z0-9\.])+(:\d+)?$/)
+        ))
+    {
+        throw ("Channel.build() called with an invalid origin");
+    }
+    if (typeof msg_scope !== 'undefined') {
+        if (typeof msg_scope !== 'string') throw 'scope, when specified, must be a string';
+        if (msg_scope.split('::').length > 1) throw "scope may not contain double colons: '::'"
+    }
 
     /* private variables */
     // registrations: mapping method names to call objects
     var regTbl = { };
+
     // current (open) transactions
     var tranTbl = { };
     // current transaction id

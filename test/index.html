@@ -1,0 +1,82 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+
+<title> JSChannel Tests </title>
+
+<script type="text/javascript" src="doctestjs/doctest.js"></script>
+<link rel="stylesheet" type="text/css" href="doctestjs/doctest.css">
+<script type="text/javascript" src="../src/jschannel.js"></script>
+
+<style type="text/css">
+body {
+    font-family: "Helvetica,Arial,FreeSans";
+}
+#container {
+  margin: 0 auto;
+  width: 700px;
+}
+h1 { font-size: 3.8em; margin-bottom: 3px; }
+h1 .small { font-size: 0.4em; }
+h1 a { text-decoration: none }
+h2 { font-size: 1.5em;  }
+    h3 { text-align: center; }
+    .description { font-size: 1.2em; margin-bottom: 30px; margin-top: 30px; font-style: italic;}
+    .download { float: right; }
+pre { background: #000;  color: #FFFFFF; padding: 15px;}
+    hr { border: 0; width: 80%; border-bottom: 1px solid #aaa}
+    .footer { text-align:center; padding-top:30px; font-style: italic; }
+</style>
+
+</head>
+<body>
+<iframe style="display: none;" id="childId" src="index_child.html"></iframe>
+<div id="container">
+<h1> JSChannel testing </h1>
+
+What follows are a pile of tests for JSChannel.  Simply click the test
+button at the bottom to run them.  This page uses
+the <a href="http://ianb.github.com/doctestjs/">doctestjs</a> library
+by Ian Bicking.
+
+<h2>Testing Constructor invocation</h2>
+
+Test passing a bogus first parameter to .build()
+<pre class="doctest">
+$ Channel.build();
+Error: Channel.build() called without a valid window argument
+$ Channel.build(document.getElementById("childId"));
+Error: Channel.build() called without a valid window argument
+</pre>
+
+Now how about the second, origin parameter:
+<pre class="doctest">
+$ var tgtwin = document.getElementById("childId").contentWindow;
+$ Channel.build(tgtwin, "this isn't a valid origin!");
+Error: Channel.build() called with an invalid origin
+$ Channel.build(tgtwin, "http://trickyco.de");
+$ Channel.build(tgtwin, "http://trickyco.de:8080");
+$ Channel.build(tgtwin, "http://trickyco.de:8080/");
+Error: Channel.build() called with an invalid origin
+$ Channel.build(tgtwin, "http://localhost");
+$ Channel.build(tgtwin, "http://localhost:1234");
+$ Channel.build(tgtwin, "http://10.0.1.104:1234");
+</pre>
+
+Final param, scope?
+<pre class="doctest">
+$ var tgtwin = document.getElementById("childId").contentWindow;
+$ Channel.build(tgtwin, "http://trickyco.de", "goodScope");
+$ Channel.build(tgtwin, "http://trickyco.de", "speshulScope!@#%^@**(#(%*<>';][,.';'");
+$ Channel.build(tgtwin, "http://trickyco.de", "closeTo:BadScope");
+$ Channel.build(tgtwin, "http://trickyco.de", "closer:T:o:B:a:dScope");
+$ var chan = Channel.build(tgtwin, "http://trickyco.de", "veryBad::Scope");
+Error: scope may not contain double colons: '::'
+</pre>
+
+<button onclick="doctest()">run them tests!</button>
+<pre id="doctestOutput"></pre>
+
+</div>
+</body>
+</html>
