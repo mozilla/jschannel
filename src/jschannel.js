@@ -135,10 +135,7 @@ Channel.build = function(tgt_win, tgt_origin, msg_scope) {
 
         // messages must be objects
         var m = JSON.parse(e.data);
-        if (typeof m !== 'object') {
-            debug("message is not object, dropping: " + m);
-            return;
-        }
+        if (typeof m !== 'object') return;
 
         // first, descope method if it needs it
         if (m.method && msg_scope) {
@@ -220,19 +217,19 @@ Channel.build = function(tgt_win, tgt_origin, msg_scope) {
                 handled = true;
             }
         } else if (m.id && m.callback) {
-            if (!tranTbl[m.id]) debug("received callback invocation with unrecognized transaction id: " + m.id);
-            else if (tranTbl[m.id].t != 'out') debug("received callback invocation for a request I did not send: " + m.id);
-            else if (!tranTbl[m.id].callbacks) debug("received callback invocation for a request without any callbacks: " + m.id);
-            else if (!tranTbl[m.id].callbacks[m.callback]) debug("transaction "+m.id+" has no such callback: " + m.callback);
-            else {
+            if (!tranTbl[m.id] || tranTbl[m.id].t != 'out' ||
+                !tranTbl[m.id].callbacks || !tranTbl[m.id].callbacks[m.callback])
+            {
+                debug("ignoring invalid callback, id:"+m.id+ " (" + m.callback +")");
+            } else {
                 handled = true;
                 // XXX: what if client code raises an exception here?
                 tranTbl[m.id].callbacks[m.callback](m.params);
             }
         } else if (m.id && (m.result || m.error)) {
-            if (!tranTbl[m.id]) debug("received response with unrecognized id: " + m.id);
-            else if (tranTbl[m.id].t != 'out') debug("received response to message a request I did not send: " + m.id);
-            else {
+            if (!tranTbl[m.id] || tranTbl[m.id].t != 'out') {
+                debug("ignoring invalid response: " + m.id);
+            } else {
                 handled = true;
                 // XXX: what if client code raises an exception here?
                 if (m.result) tranTbl[m.id].success(m.result);
@@ -254,9 +251,8 @@ Channel.build = function(tgt_win, tgt_origin, msg_scope) {
         if (handled) {
             // we got it, hands off.
             e.stopPropagation();
-            debug("message handled");
         } else {
-            debug("this channel can't handle that event, sorry");
+            debug("Ignoring event: " + e.data);
         }
     }
 
@@ -278,10 +274,8 @@ Channel.build = function(tgt_win, tgt_origin, msg_scope) {
         else tgt_win.postMessage(JSON.stringify(msg), remoteOrigin);
     }
 
-
     // run once the other side declares themselves ready
     var onReady = function(trans, args) {
-        debug("onReady called!");
         while (pendingQueue.length) {
             tgt_win.postMessage(JSON.stringify(pendingQueue.pop()), remoteOrigin);
         }
@@ -289,11 +283,6 @@ Channel.build = function(tgt_win, tgt_origin, msg_scope) {
         // don't respond to responses, lest the din become unbearable
         if (args !== 'pong') obj.notify({ method: '__ready', params: "pong"});
     };
-
-    // called on the child, by the parent once the parent hooks up their channel
-    // this will cause a new readiness handshake to be exchanged in the case where the
-    // child is ready before the parent and the initial __ready notification is lost
-
 
     // Setup postMessage event listeners
     if (window.addEventListener) window.addEventListener('message', onMessage, false);
@@ -355,6 +344,6 @@ Channel.build = function(tgt_win, tgt_origin, msg_scope) {
 
     obj.bind('__ready', onReady);
     ready = true; obj.notify({ method: '__ready', params: 'ping' }); ready = false;
-    debug('loaded');
+    debug('channel loaded.');
     return obj;
 }
