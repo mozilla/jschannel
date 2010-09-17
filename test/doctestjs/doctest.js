@@ -373,21 +373,25 @@ doctest.JSRunner.prototype.run = function (example) {
     logDebug('Error in expression: ' + example.example);
     logDebug('Traceback for error', e);
     if (e.stack) {
-      var stack = e.stack.split('\n');
-      for (var i=0; i<stack.length; i++) {
-        if (stack[i] == '@:0' || ! stack[i]) {
-          continue;
+        try {
+            var stack = e.stack.split('\n');
+            for (var i=0; i<stack.length; i++) {
+                if (stack[i] == '@:0' || ! stack[i]) {
+                    continue;
+                }
+                var parts = stack[i].split('@');
+                var context = parts[0];
+                parts = parts[1].split(':');
+                var filename = parts[parts.length-2].split('/');
+                filename = filename[filename.length-1];
+                var lineno = parts[parts.length-1];
+                if (context != '' && filename != 'jsdoctest.js') {
+                    logDebug('  ' + context + ' -> '+filename+':'+lineno);
+                }
+            }
+        } catch (e2) {
+            // give up on the log message
         }
-        var parts = stack[i].split('@');
-        var context = parts[0];
-        parts = parts[1].split(':');
-        var filename = parts[parts.length-2].split('/');
-        filename = filename[filename.length-1];
-        var lineno = parts[parts.length-1];
-        if (context != '' && filename != 'jsdoctest.js') {
-          logDebug('  ' + context + ' -> '+filename+':'+lineno);
-        }
-      }
     }
   }
   if (typeof result != 'undefined'
