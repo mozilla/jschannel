@@ -293,7 +293,14 @@ Channel.build = function(tgt_win, tgt_origin, msg_scope) {
     else if(window.attachEvent) window.attachEvent('onmessage', onMessage);
 
     var obj = {
-        unbind: function (method) { },
+        // tries to unbind a bound message handler.  returns false if not possible
+        unbind: function (method) {
+            if (regTbl[method]) {
+                if (!(delete regTbl[method])) throw ("can't delete method: " + method);
+                return true;
+            }
+            return false;
+        },
         bind: function (method, cb) {
             if (!method || typeof method !== 'string') throw "'method' argument to bind must be string";
             if (!cb || typeof cb !== 'function') throw "callback missing from bind params";
