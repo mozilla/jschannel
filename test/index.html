@@ -60,22 +60,22 @@ Now how about the second, origin parameter:
 $ var tgtwin = document.getElementById("fakeChildId").contentWindow;
 $ Channel.build(tgtwin, "this isn't a valid origin!");
 Error: Channel.build() called with an invalid origin
-$ Channel.build(tgtwin, "http://trickyco.de");
-$ Channel.build(tgtwin, "http://trickyco.de:8080");
+$ Channel.build(tgtwin, "http://trickyco.de").destroy();
+$ Channel.build(tgtwin, "http://trickyco.de:8080").destroy();
 $ Channel.build(tgtwin, "http://trickyco.de:8080/");
 Error: Channel.build() called with an invalid origin
-$ Channel.build(tgtwin, "http://localhost");
-$ Channel.build(tgtwin, "http://localhost:1234");
-$ Channel.build(tgtwin, "http://10.0.1.104:1234");
+$ Channel.build(tgtwin, "http://localhost").destroy();
+$ Channel.build(tgtwin, "http://localhost:1234").destroy();
+$ Channel.build(tgtwin, "http://10.0.1.104:1234").destroy();
 </pre>
 
 Final param, scope?
 <pre class="doctest">
 $ var tgtwin = document.getElementById("fakeChildId").contentWindow;
-$ Channel.build(tgtwin, "http://trickyco.de", "goodScope");
-$ Channel.build(tgtwin, "http://trickyco.de", "speshulScope!@#%^@**(#(%*<>';][,.';'");
-$ Channel.build(tgtwin, "http://trickyco.de", "closeTo:BadScope");
-$ Channel.build(tgtwin, "http://trickyco.de", "closer:T:o:B:a:dScope");
+$ Channel.build(tgtwin, "http://trickyco.de", "goodScope").destroy();
+$ Channel.build(tgtwin, "http://trickyco.de", "speshulScope!@#%^@**(#(%*<>';][,.';'").destroy();
+$ Channel.build(tgtwin, "http://trickyco.de", "closeTo:BadScope").destroy();
+$ Channel.build(tgtwin, "http://trickyco.de", "closer:T:o:B:a:dScope").destroy();
 $ var chan = Channel.build(tgtwin, "http://trickyco.de", "veryBad::Scope");
 Error: scope may not contain double colons: '::'
 </pre>

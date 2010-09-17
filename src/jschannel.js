@@ -126,7 +126,7 @@ Channel.build = function(tgt_win, tgt_origin, msg_scope) {
 
     var onMessage = function(e) {
         var handled = false;
-        debug("got message: " + e.data);
+        debug("got    message: " + e.data);
         // validate event origin
         if (tgt_origin !== '*' && tgt_origin !== e.origin) {
             debug("dropping message, origin mismatch! '" + tgt_origin + "' !== '" + e.origin + "'");
@@ -268,7 +268,7 @@ Channel.build = function(tgt_win, tgt_origin, msg_scope) {
         if (!msg) throw "postMessage called with null message";
 
         // delay posting if we're not ready yet.
-        var verb = (ready ? "posting" : "queueing"); 
+        var verb = (ready ? "post  " : "queue "); 
         debug(verb + " message: " + JSON.stringify(msg));
         if (!ready) pendingQueue.push(msg);
         else tgt_win.postMessage(JSON.stringify(msg), remoteOrigin);
@@ -357,6 +357,18 @@ Channel.build = function(tgt_win, tgt_origin, msg_scope) {
 
             // no need to go into any transaction table 
             postMessage({ method: scopeMethod(m.method), params: m.params });
+        },
+        destroy: function () {
+            if (window.removeEventListener) window.removeEventListener('message', onMessage, false);
+            else if(window.detachEvent) window.detachEvent('onmessage', onMessage);
+            ready = false;
+            regTbl = { };
+            tranTbl = { };
+            curTranId = 0;
+            remoteOrigin = null;
+            pendingQueue = [ ];
+            debug("channel destroyed");
+            chanId = "";
         }
     };
 
