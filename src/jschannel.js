@@ -201,7 +201,7 @@ Channel.build = function(tgt_win, tgt_origin, msg_scope) {
                         else if (typeof e.error === 'string') {
                             error = e.error;
                             if (!e.message) message = "";
-                            else if (typeof e.message === 'string') messasge = e.message;
+                            else if (typeof e.message === 'string') message = e.message;
                             else e = e.message; // let the stringify/toString message give us a reasonable verbose error string
                         }
                     }
