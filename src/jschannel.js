@@ -111,7 +111,7 @@ Channel.build = function(tgt_win, tgt_origin, msg_scope) {
 
     var onMessage = function(e) {
         var handled = false;
-        debug("got message: " + JSON.stringify(e.data));
+        debug("got message: " + e.data);
         // validate event origin
         if (tgt_origin !== '*' && tgt_origin !== e.origin) {
             debug("dropping message, origin mismatch! '" + tgt_origin + "' !== '" + e.origin + "'");
@@ -119,8 +119,7 @@ Channel.build = function(tgt_win, tgt_origin, msg_scope) {
         }
 
         // messages must be objects
-        // XXX: should we explicitly JSON.parse/stringify for better browser support?
-        var m = e.data;
+        var m = JSON.parse(e.data);
         if (typeof m !== 'object') {
             debug("message is not object, dropping: " + m);
             return;
@@ -261,7 +260,7 @@ Channel.build = function(tgt_win, tgt_origin, msg_scope) {
         var verb = (ready ? "posting" : "queueing"); 
         debug(verb + " message (" + msg.id + ") |" + msg.method + "|(" + JSON.stringify(msg));
         if (!ready) pendingQueue.push(msg);
-        else tgt_win.postMessage(msg, remoteOrigin);
+        else tgt_win.postMessage(JSON.stringify(msg), remoteOrigin);
     }
 
     // called on the parent once readiness is achieved
@@ -269,7 +268,7 @@ Channel.build = function(tgt_win, tgt_origin, msg_scope) {
         // trans will be null
         ready = true;
         while (pendingQueue.length) {
-            tgt_win.postMessage(pendingQueue.pop(), remoteOrigin);
+            tgt_win.postMessage(JSON.stringify(pendingQueue.pop()), remoteOrigin);
         }
         obj.unbind("__ready");
     };
