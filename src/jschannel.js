@@ -278,15 +278,22 @@ Channel.build = function(tgt_win, tgt_origin, msg_scope) {
         else tgt_win.postMessage(JSON.stringify(msg), remoteOrigin);
     }
 
-    // called on the parent once readiness is achieved
-    var onReady = function(trans, e) {
-        // trans will be null
-        ready = true;
+
+    // run once the other side declares themselves ready
+    var onReady = function(trans, args) {
+        debug("onReady called!");
         while (pendingQueue.length) {
             tgt_win.postMessage(JSON.stringify(pendingQueue.pop()), remoteOrigin);
         }
-        obj.unbind("__ready");
+        ready = true;
+        // don't respond to responses, lest the din become unbearable
+        if (args !== 'pong') obj.notify({ method: '__ready', params: "pong"});
     };
+
+    // called on the child, by the parent once the parent hooks up their channel
+    // this will cause a new readiness handshake to be exchanged in the case where the
+    // child is ready before the parent and the initial __ready notification is lost
+
 
     // Setup postMessage event listeners
     if (window.addEventListener) window.addEventListener('message', onMessage, false);
@@ -346,11 +353,8 @@ Channel.build = function(tgt_win, tgt_origin, msg_scope) {
         }
     };
 
-    if (child) {
-        obj.notify({ method: '__ready' });
-    } else {
-        obj.bind('__ready', onReady);
-    }
+    obj.bind('__ready', onReady);
+    ready = true; obj.notify({ method: '__ready', params: 'ping' }); ready = false;
     debug('loaded');
     return obj;
 }
