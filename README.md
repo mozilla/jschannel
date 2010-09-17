@@ -1,16 +1,17 @@
 ## Welcome to JSChannel
 
-JSChannel is a *small* JavaScript abstraction layer on top of HTML5
-cross document messaging.  It builds rich and robust messaging
-semantics on top of simple postMessage message passing.
+JSChannel is a small JavaScript abstraction layer on top of HTML5
+cross document messaging.  It builds rich messaging
+semantics out of postMessage.
 
 ## Overview
 
-HTML5's cross document messaging opens up a ton of possibilities for 
-interesting client side creations.  But, the specification provides the
-bare minimum amount of plumbing required to support cross domain client
-side communication.  JSChannel is a very small abstraction that provides
-higher level messaging semantics on top of postMessage, which include:
+HTML5's cross document messaging opens up a ton of possibilities for
+interesting client side creations.  But, the specification only
+provides the bare minimum amount of plumbing required to support cross
+domain client side communication.  JSChannel is a very small
+abstraction that provides higher level messaging semantics on top of
+postMessage, which include:
 
   * Query/Response - including support for *callback arguments*
   * Notifications - Fire and forget style.
@@ -18,19 +19,20 @@ higher level messaging semantics on top of postMessage, which include:
 In addition to support for these messaging semantics, the library sports
 the following additional features:
 
-  * "scoping", all messages will 
+  * "scoping", all messages will be safely tucked under the namespace you
+    provide.
   * multiple channel support - message handling properly stops propagation
-    once messages are handled, and when they're not handled it leaves
+    once messages are handled, and when they're not it leaves
     them alone.  This means you can have an arbitrary number of different
     channels in a single page.
-  * Rich messaging semantics - Query/Response and notifications
+  * Rich messaging semantics - Query/Response and Notifications
   * An idiomatic api - exceptions inside message handlers automatically
     turn into error responses.  return values are likewise converted into
     "success" responses.
   * support for errors: the library provides the basic structure for error
-    propagation but lets the client define error codes.
-  * may be used asynchronously.
-  * supports any browser with JSON parsing (native or js library) and
+    propagation while the client define error codes.
+  * very compatible with asynchronicity.
+  * supports any browser with JSON parsing (native or as a JS library) and
     postMessage.
   * designed primarily for inter-frame communication.
 
