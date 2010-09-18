@@ -70,9 +70,6 @@ document in an iframe (child.html) and invokes a function on her.
     
     var chan = Channel.build(window.parent, "*", "testScope");
     chan.bind("reverse", function(trans, s) {
-        if (typeof s !== 'string') {
-            throw [ "invalid_arguments", 'argument to reverse function should be a string' ];
-        }
         return s.split("").reverse().join("");
     });
     
