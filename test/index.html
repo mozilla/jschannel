@@ -62,8 +62,7 @@ $ Channel.build(tgtwin, "this isn't a valid origin!");
 Error: Channel.build() called with an invalid origin
 $ Channel.build(tgtwin, "http://trickyco.de").destroy();
 $ Channel.build(tgtwin, "http://trickyco.de:8080").destroy();
-$ Channel.build(tgtwin, "http://trickyco.de:8080/");
-Error: Channel.build() called with an invalid origin
+$ Channel.build(tgtwin, "http://trickyco.de:8080/").destroy();
 $ Channel.build(tgtwin, "http://localhost").destroy();
 $ Channel.build(tgtwin, "http://localhost:1234").destroy();
 $ Channel.build(tgtwin, "http://10.0.1.104:1234").destroy();

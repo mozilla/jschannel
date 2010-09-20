@@ -38,15 +38,18 @@ Channel.build = function(tgt_win, tgt_origin, msg_scope) {
     if (!tgt_win || !tgt_win.postMessage) throw("Channel.build() called without a valid window argument");
     // let's require that the client specify an origin.  if we just assume '*' we'll be
     // propagating unsafe practices.  that would be lame.
-    if (typeof tgt_origin !== 'string' || 
-        // allow '*'
-        (tgt_origin !== "*" &&
-        // allow valid domains under http and https (a simple loose check)
-         !tgt_origin.match(/^https?:\/\/([-a-zA-Z0-9\.])+(:\d+)?$/)
-        ))
-    {
-        throw ("Channel.build() called with an invalid origin");
+    var validOrigin = false;
+    if (typeof tgt_origin === 'string') {
+        var oMatch;
+        if (tgt_origin === "*") validOrigin = true;
+        // allow valid domains under http and https.  Also, trim paths off otherwise valid origins.
+        else if (null !== (oMatch = tgt_origin.match(/^https?:\/\/(?:[-a-zA-Z0-9\.])+(?::\d+)?/))) {
+            tgt_origin = oMatch[0];
+            validOrigin = true;
+        }
     }
+    if (!validOrigin) throw ("Channel.build() called with an invalid origin");
+
     if (typeof msg_scope !== 'undefined') {
         if (typeof msg_scope !== 'string') throw 'scope, when specified, must be a string';
         if (msg_scope.split('::').length > 1) throw "scope may not contain double colons: '::'"
