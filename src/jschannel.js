@@ -381,7 +381,9 @@ Channel.build = function(cfg) {
             pruneFunctions("", m.params);
 
             // build a 'request' message and send it
-            postMessage({ id: curTranId, method: scopeMethod(m.method), params: m.params, callbacks: callbackNames });
+            var msg = { id: curTranId, method: scopeMethod(m.method), params: m.params };
+            if (callbackNames.length) msg.callbacks = callbackNames;
+            postMessage(msg);
 
             // insert into the transaction table
             tranTbl[curTranId] = { t: 'out', callbacks: callbacks, error: m.error, success: m.success };

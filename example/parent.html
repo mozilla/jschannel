@@ -73,6 +73,7 @@ function docLog(which, m) {
 }
 
 var chan = Channel.build({
+    debugOutput: true,
     window: document.getElementById("childId").contentWindow,
     origin: "*",
     scope: "testScope"
