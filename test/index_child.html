@@ -36,6 +36,8 @@ chan.bind("caller_backer", function(trans, a) {
     trans.complete("complete");
 });
 
+chan.bind("echo", function(trans, a) { return a });
+
 </script>
 </head>
 </html>

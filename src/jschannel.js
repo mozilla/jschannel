@@ -259,14 +259,14 @@ Channel.build = function(cfg) {
                 // XXX: what if client code raises an exception here?
                 tranTbl[m.id].callbacks[m.callback](m.params);
             }
-        } else if (m.id && (m.result || m.error)) {
+        } else if (m.id && ((typeof m.result !== 'undefined') || m.error)) {
             if (!tranTbl[m.id] || tranTbl[m.id].t != 'out') {
                 debug("ignoring invalid response: " + m.id);
             } else {
                 handled = true;
                 // XXX: what if client code raises an exception here?
-                if (m.result) tranTbl[m.id].success(m.result);
-                else tranTbl[m.id].error(m.error, m.message);
+                if (m.error) tranTbl[m.id].error(m.error, m.message);
+                else tranTbl[m.id].success(m.result);
                 delete tranTbl[m.id];
             }
         } else if (m.method) {

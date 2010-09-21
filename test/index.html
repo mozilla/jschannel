@@ -138,6 +138,20 @@ Spy('spy3').spy3("STOP CALLING ME!")
 $ chan.query({method: "caller_backer", params: { cb: dummyf }, error: ef, success: sf}); spy3.wait();
 Spy('spy3').spy3("complete")
 </pre>
+
+<h2>echo test</h2>
+<pre class="doctest">
+$ var spy4 = Spy('spy4', {writes: true});
+$ var sf = function (r) { spy3.func(r) };
+$ var ef = function (code, message) { spy3.func(code, message); };
+$ chan.query({method: "echo", params: 0, success: sf, error: ef}); spy3.wait();
+Spy('spy3').spy3(0)
+$ chan.query({method: "echo", params: null, success: sf, error: ef}); spy3.wait();
+Spy('spy3').spy3(null)
+$ chan.query({method: "echo", params: false, success: sf, error: ef}); spy3.wait();
+Spy('spy3').spy3(false)
+</pre>
+
 </div>
 </body>
 </html>
