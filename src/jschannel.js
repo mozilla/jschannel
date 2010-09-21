@@ -167,6 +167,8 @@ Channel.build = function(cfg) {
         if (typeof m !== 'object') return;
 
         // first, descope method if it needs it
+        var unscopedMethod = m.method;
+
         if (m.method && cfg.scope) {
             var ar = m.method.split('::');
             if (ar.length != 2) {
@@ -177,12 +179,19 @@ Channel.build = function(cfg) {
                 debug("dropping message: out of scope: '" + ar[0] + "' !== '" + cfg.scope + "'");
                 return;
             }
-            m.method = ar[1];
+            unscopedMethod = ar[1];
         }
 
+        // if an observer was specified at allocation time, invoke it
         if (typeof cfg.gotMessageObserver === 'function') {
-            cfg.gotMessageObserver(e.origin, m);
+            // pass observer a clone of the object so that our
+            // manipulations are not visible (i.e. method unscoping).
+            // This is not particularly efficient, but then we expect
+            // that message observers are primarily for debugging anyway.
+            cfg.gotMessageObserver(e.origin, JSON.parse(JSON.stringify(m)));
         }
+
+        m.method = unscopedMethod;
 
         // now, what type of message is this?
         if (m.id && m.method) {
