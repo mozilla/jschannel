@@ -55,7 +55,7 @@ document in an iframe (child.html) and invokes a function on her.
         origin: "*",
         scope: "testScope"
     });
-    chan.query({
+    chan.call({
         method: "reverse",
         params: "hello world!",
         success: function(v) {

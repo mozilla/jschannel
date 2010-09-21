@@ -91,7 +91,7 @@ chan = Channel.build({window: document.getElementById("childId").contentWindow, 
 Test basic query/response:
 <pre class="doctest">
 $ var spy1 = Spy('spy1', {writes: true});
-$ chan.query({
+$ chan.call({
 >   method: "reverse",
 >   params: "hello world!",
 >   success: function(v) {
@@ -107,19 +107,19 @@ Test all flavors of error responses
 $ var spy2 = Spy('spy2', {writes: true});
 $ var sf = function (r) { spy2.func(r) }; // not hit in this block!
 $ var ef = function (code, message) { spy2.func(code, message); };
-$ chan.query({method: "error", error: ef, success: sf}); spy2.wait();
+$ chan.call({method: "error", error: ef, success: sf}); spy2.wait();
 Spy('spy2').spy2("parameter_required", "you're missing the 'type of error to emit' parameter, doofus")
-$ chan.query({method: "error", params: "throw_array", error: ef, success: sf}); spy2.wait();
+$ chan.call({method: "error", params: "throw_array", error: ef, success: sf}); spy2.wait();
 Spy('spy2').spy2("array_error_code", "array error message")
-$ chan.query({method: "error", params: "throw_object", error: ef, success: sf}); spy2.wait();
+$ chan.call({method: "error", params: "throw_object", error: ef, success: sf}); spy2.wait();
 Spy('spy2').spy2("object_error_code", "object error message")
-$ chan.query({method: "error", params: "throw_string", error: ef, success: sf}); spy2.wait();
+$ chan.call({method: "error", params: "throw_string", error: ef, success: sf}); spy2.wait();
 Spy('spy2').spy2("runtime_error", "this is a string")
-$ chan.query({method: "error", params: "accidental_throw", error: ef, success: sf}); spy2.wait(); // exception content varies by browser
+$ chan.call({method: "error", params: "accidental_throw", error: ef, success: sf}); spy2.wait(); // exception content varies by browser
 Spy('spy2').spy2("runtime_error", ...)
-$ chan.query({method: "error", params: "smush_object", error: ef, success: sf}); spy2.wait(); // thrown objects get smushed.
+$ chan.call({method: "error", params: "smush_object", error: ef, success: sf}); spy2.wait(); // thrown objects get smushed.
 Spy('spy2').spy2("runtime_error", "{\"dont\":\"smush\",\"me\":\"no!!\"}")
-$ chan.query({method: "error", params: "tostring_craziness", error: ef, success: sf}); spy2.wait(); // if JSON.stringify pukes, toString()
+$ chan.call({method: "error", params: "tostring_craziness", error: ef, success: sf}); spy2.wait(); // if JSON.stringify pukes, toString()
 Spy('spy2').spy2("runtime_error", "[object ...]")
 </pre>
 
@@ -129,13 +129,13 @@ $ var spy3 = Spy('spy3', {writes: true});
 $ var dummyf = function (r) { };
 $ var sf = function (r) { spy3.func(r) };
 $ var ef = function (code, message) { spy3.func(code, message); };
-$ chan.query({method: "caller_backer", params: { cb: sf }, success: dummyf}); spy3.wait();
+$ chan.call({method: "caller_backer", params: { cb: sf }, success: dummyf}); spy3.wait();
 Spy('spy3').spy3("you called?")
-$ chan.query({method: "caller_backer", params: { cb2: sf }, success: dummyf}); spy3.wait();
+$ chan.call({method: "caller_backer", params: { cb2: sf }, success: dummyf}); spy3.wait();
 Spy('spy3').spy3("you called again!?")
-$ chan.query({method: "caller_backer", params: { nested: { cb: sf } }, success: dummyf}); spy3.wait();
+$ chan.call({method: "caller_backer", params: { nested: { cb: sf } }, success: dummyf}); spy3.wait();
 Spy('spy3').spy3("STOP CALLING ME!")
-$ chan.query({method: "caller_backer", params: { cb: dummyf }, error: ef, success: sf}); spy3.wait();
+$ chan.call({method: "caller_backer", params: { cb: dummyf }, error: ef, success: sf}); spy3.wait();
 Spy('spy3').spy3("complete")
 </pre>
 
@@ -144,11 +144,11 @@ Spy('spy3').spy3("complete")
 $ var spy4 = Spy('spy4', {writes: true});
 $ var sf = function (r) { spy3.func(r) };
 $ var ef = function (code, message) { spy3.func(code, message); };
-$ chan.query({method: "echo", params: 0, success: sf, error: ef}); spy3.wait();
+$ chan.call({method: "echo", params: 0, success: sf, error: ef}); spy3.wait();
 Spy('spy3').spy3(0)
-$ chan.query({method: "echo", params: null, success: sf, error: ef}); spy3.wait();
+$ chan.call({method: "echo", params: null, success: sf, error: ef}); spy3.wait();
 Spy('spy3').spy3(null)
-$ chan.query({method: "echo", params: false, success: sf, error: ef}); spy3.wait();
+$ chan.call({method: "echo", params: false, success: sf, error: ef}); spy3.wait();
 Spy('spy3').spy3(false)
 </pre>
 

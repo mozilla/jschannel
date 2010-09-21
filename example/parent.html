@@ -81,7 +81,7 @@ var chan = Channel.build({
 
 // first let's run a basic invocation
 docLog(1, "invoking reverse method with args 'hello world!'");
-chan.query({
+chan.call({
     method: "reverse",
     params: "hello world!",
     success: function(v) {
@@ -91,7 +91,7 @@ chan.query({
 
 // let's screw up the arguments and see what happens
 docLog(2, "invoking reverse method again, now with bogus arguments");
-chan.query({
+chan.call({
     method: "reverse",
     params: ["this is not a string"],
     error: function(error, message) { docLog(2, "ERROR: " + error + " (" + message + ")"); },
@@ -105,12 +105,12 @@ chan.query({
 chan.bind("notify", function(t, s) { docLog(3, "got notification: " + s); });
 
 // step 2, invoke the function on our child which will cause him to send us a notification 
-chan.query({method: "sendNotification", success: function() { } });
+chan.call({method: "sendNotification", success: function() { } });
 
 // finally, let's explore the 'callback' mechanism, which allows callbacks to be passed
 // *as arguments*, and the recipient may invoke these callbacks any number of times before
 // the completion of the function call.
-chan.query({
+chan.call({
     method: "charify",
     params: {
       gotChar: function(c) { docLog(4, "gotChar callback invoked: '" + c + "'"); },

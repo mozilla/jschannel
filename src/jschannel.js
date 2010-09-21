@@ -362,10 +362,10 @@ Channel.build = function(cfg) {
             if (regTbl[method]) throw "method '"+method+"' is already bound!";
             regTbl[method] = cb;
         },
-        query: function(m) {
-            if (!m) throw 'missing arguments to query function';
-            if (!m.method || typeof m.method !== 'string') throw "'method' argument to query must be string";
-            if (!m.success || typeof m.success !== 'function') throw "'success' callback missing from query";
+        call: function(m) {
+            if (!m) throw 'missing arguments to call function';
+            if (!m.method || typeof m.method !== 'string') throw "'method' argument to call must be string";
+            if (!m.success || typeof m.success !== 'function') throw "'success' callback missing from call";
 
             // now it's time to support the 'callback' feature of jschannel.  We'll traverse the argument
             // object and pick out all of the functions that were passed as arguments.
