@@ -50,32 +50,34 @@ by Ian Bicking.
 Test passing a bogus first parameter to .build()
 <pre class="doctest">
 $ Channel.build();
+Error: Channel build invoked without a proper object argument
+$ Channel.build({});
 Error: Channel.build() called without a valid window argument
-$ Channel.build(document.getElementById("fakeChildId"));
+$ Channel.build({window: document.getElementById("fakeChildId")});
 Error: Channel.build() called without a valid window argument
 </pre>
 
-Now how about the second, origin parameter:
+Now how about the origin parameter:
 <pre class="doctest">
 $ var tgtwin = document.getElementById("fakeChildId").contentWindow;
-$ Channel.build(tgtwin, "this isn't a valid origin!");
+$ Channel.build({window: tgtwin, origin: "this isn't a valid origin!"});
 Error: Channel.build() called with an invalid origin
-$ Channel.build(tgtwin, "http://trickyco.de").destroy();
-$ Channel.build(tgtwin, "http://trickyco.de:8080").destroy();
-$ Channel.build(tgtwin, "http://trickyco.de:8080/").destroy();
-$ Channel.build(tgtwin, "http://localhost").destroy();
-$ Channel.build(tgtwin, "http://localhost:1234").destroy();
-$ Channel.build(tgtwin, "http://10.0.1.104:1234").destroy();
+$ Channel.build({window: tgtwin, origin: "http://trickyco.de"}).destroy();
+$ Channel.build({window: tgtwin, origin: "http://trickyco.de:8080"}).destroy();
+$ Channel.build({window: tgtwin, origin: "http://trickyco.de:8080/"}).destroy();
+$ Channel.build({window: tgtwin, origin: "http://localhost"}).destroy();
+$ Channel.build({window: tgtwin, origin: "http://localhost:1234"}).destroy();
+$ Channel.build({window: tgtwin, origin: "http://10.0.1.104:1234"}).destroy();
 </pre>
 
-Final param, scope?
+Scope parameter
 <pre class="doctest">
 $ var tgtwin = document.getElementById("fakeChildId").contentWindow;
-$ Channel.build(tgtwin, "http://trickyco.de", "goodScope").destroy();
-$ Channel.build(tgtwin, "http://trickyco.de", "speshulScope!@#%^@**(#(%*<>';][,.';'").destroy();
-$ Channel.build(tgtwin, "http://trickyco.de", "closeTo:BadScope").destroy();
-$ Channel.build(tgtwin, "http://trickyco.de", "closer:T:o:B:a:dScope").destroy();
-$ var chan = Channel.build(tgtwin, "http://trickyco.de", "veryBad::Scope");
+$ Channel.build({window: tgtwin, origin: "http://trickyco.de", scope: "goodScope"}).destroy();
+$ Channel.build({window: tgtwin, origin: "http://trickyco.de", scope: "speshulScope!@#%^@**(#(%*<>';][,.';'"}).destroy();
+$ Channel.build({window: tgtwin, origin: "http://trickyco.de", scope: "closeTo:BadScope"}).destroy();
+$ Channel.build({window: tgtwin, origin: "http://trickyco.de", scope: "closer:T:o:B:a:dScope"}).destroy();
+$ Channel.build({window: tgtwin, origin: "http://trickyco.de", scope: "veryBad::Scope"});
 Error: scope may not contain double colons: '::'
 </pre>
 
@@ -83,7 +85,7 @@ Error: scope may not contain double colons: '::'
 
 <script>
 // allocate a single global channel that we'll run all our tests in
-chan = Channel.build(document.getElementById("childId").contentWindow, "*", "testScope");
+chan = Channel.build({window: document.getElementById("childId").contentWindow, origin: "*", scope: "testScope"});
 </script>
 
 Test basic query/response:

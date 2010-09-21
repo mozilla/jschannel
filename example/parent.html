@@ -72,7 +72,11 @@ function docLog(which, m) {
     document.getElementById(tag).appendChild(e);
 }
 
-var chan = Channel.build(document.getElementById("childId").contentWindow, "*", "testScope");
+var chan = Channel.build({
+    window: document.getElementById("childId").contentWindow,
+    origin: "*",
+    scope: "testScope"
+});
 
 // first let's run a basic invocation
 docLog(1, "invoking reverse method with args 'hello world!'");

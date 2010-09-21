@@ -7,7 +7,7 @@
 <script src="../src/jschannel.js"></script>
 <script>
 
-var chan = Channel.build(window.parent, "*", "testScope");
+var chan = Channel.build({window: window.parent, origin: "*", scope: "testScope"});
 
 chan.bind("reverse", function(trans, s) {
     return s.split("").reverse().join("");

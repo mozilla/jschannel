@@ -8,7 +8,7 @@
 <script>
 
 
-var chan = Channel.build(window.parent, "*", "testScope");
+var chan = Channel.build({window: window.parent, origin: "*", scope: "testScope"});
 chan.bind("reverse", function(trans, s) {
     if (typeof s !== 'string') {
         throw [ "invalid_arguments", 'argument to reverse function should be a string' ];

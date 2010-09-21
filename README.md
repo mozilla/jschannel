@@ -50,7 +50,11 @@ document in an iframe (child.html) and invokes a function on her.
     </body>
     <script>
     
-    var chan = Channel.build(document.getElementById("childId").contentWindow, "*", "testScope");
+    var chan = Channel.build({
+        window: document.getElementById("childId").contentWindow,
+        origin: "*",
+        scope: "testScope"
+    });
     chan.query({
         method: "reverse",
         params: "hello world!",
@@ -68,7 +72,7 @@ document in an iframe (child.html) and invokes a function on her.
     <script src="src/jschannel.js"></script>
     <script>
     
-    var chan = Channel.build(window.parent, "*", "testScope");
+    var chan = Channel.build({window: window.parent, origin: "*", scope: "testScope"});
     chan.bind("reverse", function(trans, s) {
         return s.split("").reverse().join("");
     });

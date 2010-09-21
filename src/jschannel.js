@@ -16,10 +16,34 @@
 ;Channel = { }
 /* a messaging channel is constructed from a window and an origin.
  * the channel will assert that all messages received over the
- * channel match the origin */
-Channel.build = function(tgt_win, tgt_origin, msg_scope) {
+ * channel match the origin
+ *
+ * Arguments to Channel.build(cfg):
+ *
+ *   cfg.window - the remote window with which we'll communication
+ *   cfg.origin - the expected origin of the remote window, may be '*'
+ *                which matches any origin
+ *   cfg.scope  - the 'scope' of messages.  a scope string that is
+ *                prepended to message names.  local and remote endpoints
+ *                of a single channel must agree upon scope. Scope may
+ *                not contain double colons ('::').
+ *   cfg.debugOutput - A boolean value.  If true and window.console.log is
+ *                a function, then debug strings will be emitted to that
+ *                function.
+ *   cfg.debugOutput - A boolean value.  If true and window.console.log is
+ *                a function, then debug strings will be emitted to that
+ *                function.
+ *   cfg.postMessageObserver - A function that will be passed two arguments,
+ *                an origin and a message.  It will be passed these immediately
+ *                before messages are posted.
+ *   cfg.gotMessageObserver - A function that will be passed two arguments,
+ *                an origin and a message.  It will be passed these arguments
+ *                immediately after they pass scope and origin checks, but before
+ *                they are processed.
+ */
+Channel.build = function(cfg) {
     var debug = function(m) {
-        if (window.console && window.console.log) {
+        if (cfg.debugOutput && window.console && window.console.log) {
             // try to stringify, if it doesn't work we'll let javascript's built in toString do its magic
             try { if (typeof m !== 'string') m = JSON.stringify(m); } catch(e) { }
             console.log("["+chanId+"] " + m);
@@ -30,29 +54,32 @@ Channel.build = function(tgt_win, tgt_origin, msg_scope) {
     if (!window.postMessage) throw("jschannel cannot run this browser, no postMessage");
     if (!window.JSON || !window.JSON.stringify || ! window.JSON.parse) throw("jschannel cannot run this browser, no native JSON handling");
 
+    /* basic argument validation */
+    if (typeof cfg != 'object') throw("Channel build invoked without a proper object argument");
+
+    if (!cfg.window || !cfg.window.postMessage) throw("Channel.build() called without a valid window argument");
+
     /* we'd have to do a little more work to be able to run multiple channels that intercommunicate the same
      * window...  Not sure if we care to support that */
-    if (window === tgt_win) throw("target window is same as present window -- communication within the same window not yet supported");   
+    if (window === cfg.window) throw("target window is same as present window -- communication within the same window not yet supported");   
 
-    /* basic argument validation */
-    if (!tgt_win || !tgt_win.postMessage) throw("Channel.build() called without a valid window argument");
     // let's require that the client specify an origin.  if we just assume '*' we'll be
     // propagating unsafe practices.  that would be lame.
     var validOrigin = false;
-    if (typeof tgt_origin === 'string') {
+    if (typeof cfg.origin === 'string') {
         var oMatch;
-        if (tgt_origin === "*") validOrigin = true;
+        if (cfg.origin === "*") validOrigin = true;
         // allow valid domains under http and https.  Also, trim paths off otherwise valid origins.
-        else if (null !== (oMatch = tgt_origin.match(/^https?:\/\/(?:[-a-zA-Z0-9\.])+(?::\d+)?/))) {
-            tgt_origin = oMatch[0];
+        else if (null !== (oMatch = cfg.origin.match(/^https?:\/\/(?:[-a-zA-Z0-9\.])+(?::\d+)?/))) {
+            cfg.origin = oMatch[0];
             validOrigin = true;
         }
     }
     if (!validOrigin) throw ("Channel.build() called with an invalid origin");
 
-    if (typeof msg_scope !== 'undefined') {
-        if (typeof msg_scope !== 'string') throw 'scope, when specified, must be a string';
-        if (msg_scope.split('::').length > 1) throw "scope may not contain double colons: '::'"
+    if (typeof cfg.scope !== 'undefined') {
+        if (typeof cfg.scope !== 'string') throw 'scope, when specified, must be a string';
+        if (cfg.scope.split('::').length > 1) throw "scope may not contain double colons: '::'"
     }
 
     /* private variables */
@@ -72,7 +99,6 @@ Channel.build = function(tgt_win, tgt_origin, msg_scope) {
     var tranTbl = { };
     // current transaction id, start out at a random *odd* number between 1 and a million
     var curTranId = Math.floor(Math.random()*1000001) | 1;
-    var remoteOrigin = tgt_origin;
     // are we ready yet?  when false we will block outbound messages.
     var ready = false;
     var pendingQueue = [ ];
@@ -131,8 +157,8 @@ Channel.build = function(tgt_win, tgt_origin, msg_scope) {
         var handled = false;
         debug("got    message: " + e.data);
         // validate event origin
-        if (tgt_origin !== '*' && tgt_origin !== e.origin) {
-            debug("dropping message, origin mismatch! '" + tgt_origin + "' !== '" + e.origin + "'");
+        if (cfg.origin !== '*' && cfg.origin !== e.origin) {
+            debug("dropping message, origin mismatch! '" + cfg.origin + "' !== '" + e.origin + "'");
             return;
         }
 
@@ -141,17 +167,21 @@ Channel.build = function(tgt_win, tgt_origin, msg_scope) {
         if (typeof m !== 'object') return;
 
         // first, descope method if it needs it
-        if (m.method && msg_scope) {
+        if (m.method && cfg.scope) {
             var ar = m.method.split('::');
             if (ar.length != 2) {
-                debug("dropping message: has unscoped method name, I expect scoping to '" + msg_scope + "'");
+                debug("dropping message: has unscoped method name, I expect scoping to '" + cfg.scope + "'");
                 return;
             }
-            if (ar[0] !== msg_scope) {
-                debug("dropping message: out of scope: '" + ar[0] + "' !== '" + msg_scope + "'");
+            if (ar[0] !== cfg.scope) {
+                debug("dropping message: out of scope: '" + ar[0] + "' !== '" + cfg.scope + "'");
                 return;
             }
             m.method = ar[1];
+        }
+
+        if (typeof cfg.gotMessageObserver === 'function') {
+            cfg.gotMessageObserver(e.origin, m);
         }
 
         // now, what type of message is this?
@@ -259,9 +289,9 @@ Channel.build = function(tgt_win, tgt_origin, msg_scope) {
         }
     }
 
-    // scope method names based on msg_scope specified when the Channel was instantiated 
+    // scope method names based on cfg.scope specified when the Channel was instantiated 
     var scopeMethod = function(m) {
-        if (typeof msg_scope === 'string' && msg_scope.length) m = [msg_scope, m].join("::");
+        if (typeof cfg.scope === 'string' && cfg.scope.length) m = [cfg.scope, m].join("::");
         return m;
     }
 
@@ -274,7 +304,12 @@ Channel.build = function(tgt_win, tgt_origin, msg_scope) {
         var verb = (ready ? "post  " : "queue "); 
         debug(verb + " message: " + JSON.stringify(msg));
         if (!ready) pendingQueue.push(msg);
-        else tgt_win.postMessage(JSON.stringify(msg), remoteOrigin);
+        else {
+            if (typeof cfg.postMessageObserver === 'function') {
+                cfg.postMessageObserver(cfg.origin, msg);
+            }
+            cfg.window.postMessage(JSON.stringify(msg), cfg.origin);
+        }
     }
 
     var onReady = function(trans, type) {
@@ -295,7 +330,7 @@ Channel.build = function(tgt_win, tgt_origin, msg_scope) {
         if (type === 'ping') obj.notify({ method: '__ready', params: 'pong' });
 
         // flush queue
-        while (pendingQueue.length) postMessage(pendingQueue.pop(), remoteOrigin);
+        while (pendingQueue.length) postMessage(pendingQueue.pop(), cfg.origin);
     };
 
     // Setup postMessage event listeners
@@ -368,7 +403,7 @@ Channel.build = function(tgt_win, tgt_origin, msg_scope) {
             regTbl = { };
             tranTbl = { };
             curTranId = 0;
-            remoteOrigin = null;
+            cfg.origin = null;
             pendingQueue = [ ];
             debug("channel destroyed");
             chanId = "";
