@@ -40,6 +40,11 @@
  *                an origin and a message.  It will be passed these arguments
  *                immediately after they pass scope and origin checks, but before
  *                they are processed.
+ *   cfg.onReady - A function that will be invoked when a channel becomes "ready",
+ *                this occurs once both sides of the channel have been
+ *                instantiated and an application level handshake is exchanged.
+ *                the onReady function will be passed a single argument which is
+ *                the channel object that was returned from build().
  */
 Channel.build = function(cfg) {
     var debug = function(m) {
@@ -348,6 +353,9 @@ Channel.build = function(cfg) {
 
         // flush queue
         while (pendingQueue.length) postMessage(pendingQueue.pop(), cfg.origin);
+
+        // invoke onReady observer if provided
+        if (typeof cfg.onReady === 'function') cfg.onReady(obj);
     };
 
     // Setup postMessage event listeners

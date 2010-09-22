@@ -84,9 +84,21 @@ Error: scope may not contain double colons: '::'
 <h2>query/response</h2>
 
 <script>
+onReadyCalled = false;
 // allocate a single global channel that we'll run all our tests in
-chan = Channel.build({window: document.getElementById("childId").contentWindow, origin: "*", scope: "testScope"});
+chan = Channel.build({
+    window: document.getElementById("childId").contentWindow,
+    origin: "*",
+    scope: "testScope",
+    onReady: function() { onReadyCalled = true; }
+});
 </script>
+
+first, the .onReady callback
+<pre class="doctest">
+$ onReadyCalled;
+true
+</pre>
 
 Test basic query/response:
 <pre class="doctest">
