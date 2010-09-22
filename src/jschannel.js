@@ -188,7 +188,11 @@ Channel.build = function(cfg) {
             // manipulations are not visible (i.e. method unscoping).
             // This is not particularly efficient, but then we expect
             // that message observers are primarily for debugging anyway.
-            cfg.gotMessageObserver(e.origin, JSON.parse(JSON.stringify(m)));
+            try {
+                cfg.gotMessageObserver(e.origin, JSON.parse(JSON.stringify(m)));
+            } catch (e) {
+                debug("gotMessageObserver() raised an exception: " + e.toString());
+            }
         }
 
         m.method = unscopedMethod;
@@ -315,7 +319,11 @@ Channel.build = function(cfg) {
         if (!ready) pendingQueue.push(msg);
         else {
             if (typeof cfg.postMessageObserver === 'function') {
-                cfg.postMessageObserver(cfg.origin, msg);
+                try {
+                    cfg.postMessageObserver(cfg.origin, msg);
+                } catch (e) {
+                    debug("postMessageObserver() raised an exception: " + e.toString());
+                }
             }
             cfg.window.postMessage(JSON.stringify(msg), cfg.origin);
         }
