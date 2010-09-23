@@ -40,3 +40,30 @@ a.doctest-failure-link:hover {
 .doctest-example:target {
   border-left: 3px solid #f00;
 }
+
+div.test:target {
+  border: 2px solid #f00;
+}
+
+div.test {
+  border: 1px solid #999;
+  margin-bottom: 1em;
+}
+
+div.test .test-id {
+  position: relative;
+  float: right;
+  background-color: #000;
+  color: #bbb;
+  padding: 3px;
+}
+
+div.test .test-id a:link,
+div.test .test-id a:visited {
+  color: #bbb;
+  text-decoration: none;
+}
+
+div.test .test-id a:hover {
+  text-decoration: underline;
+}

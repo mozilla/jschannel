@@ -9,16 +9,19 @@ the terms of the MIT License.
 */
 
 
-function doctest(verbosity/*default=0*/, elementId/*optional*/,
+function doctest(verbosity/*default=0*/, elements/*optional*/,
                  outputId/*optional*/) {
   var output = document.getElementById(outputId || 'doctestOutput');
   var reporter = new doctest.Reporter(output, verbosity || 0);
-  if (elementId) {
-      var el = document.getElementById(elementId);
-      if (! el) {
-          throw('No such element '+elementId);
+  if (elements) {
+      if (typeof elements == 'string') {
+        // Treat it as an id
+        elements = [document.getElementById(elementId)];
       }
-      var suite = new doctest.TestSuite([el], reporter);
+      if (! elements.length) {
+          throw('No elements');
+      }
+      var suite = new doctest.TestSuite(elements, reporter);
   } else {
       var els = doctest.getElementsByTagAndClassName('pre', 'doctest');
       var suite = new doctest.TestSuite(els, reporter);
@@ -373,25 +376,21 @@ doctest.JSRunner.prototype.run = function (example) {
     logDebug('Error in expression: ' + example.example);
     logDebug('Traceback for error', e);
     if (e.stack) {
-        try {
-            var stack = e.stack.split('\n');
-            for (var i=0; i<stack.length; i++) {
-                if (stack[i] == '@:0' || ! stack[i]) {
-                    continue;
-                }
-                var parts = stack[i].split('@');
-                var context = parts[0];
-                parts = parts[1].split(':');
-                var filename = parts[parts.length-2].split('/');
-                filename = filename[filename.length-1];
-                var lineno = parts[parts.length-1];
-                if (context != '' && filename != 'jsdoctest.js') {
-                    logDebug('  ' + context + ' -> '+filename+':'+lineno);
-                }
-            }
-        } catch (e2) {
-            // give up on the log message
+      var stack = e.stack.split('\n');
+      for (var i=0; i<stack.length; i++) {
+        if (stack[i] == '@:0' || ! stack[i]) {
+          continue;
         }
+        var parts = stack[i].split('@');
+        var context = parts[0];
+        parts = parts[1].split(':');
+        var filename = parts[parts.length-2].split('/');
+        filename = filename[filename.length-1];
+        var lineno = parts[parts.length-1];
+        if (context != '' && filename != 'jsdoctest.js') {
+          logDebug('  ' + context + ' -> '+filename+':'+lineno);
+        }
+      }
     }
   }
   if (typeof result != 'undefined'
@@ -427,7 +426,8 @@ doctest.JSRunner.prototype.checkResult = function (got, expected) {
   return got.search(re) != -1;
 };
 
-RegExp.escape = function(text) {
+// Should I really be setting this on RegExp?
+RegExp.escape = function (text) {
   if (!arguments.callee.sRE) {
     var specials = [
       '/', '.', '*', '+', '?', '|',
@@ -546,7 +546,7 @@ doctest.reload = function (button/*optional*/) {
   location.reload();
 };
 
-/* Taken from MochiKit */
+/* Taken from MochiKit, with an addition to print objects */
 doctest.repr = function (o) {
     if (typeof o == 'undefined') {
         return 'undefined';
@@ -603,7 +603,7 @@ doctest.repr = function (o) {
         }
     }
     return ostring;
-}
+};
 
 doctest.repr.registry = [
     [function (o) {
@@ -720,17 +720,95 @@ if (typeof logInfo == 'undefined') {
     logInfo = log;
 }
 
-doctest.Spy = function (name, options) {
+doctest.autoSetup = function (parent) {
+  var tags = doctest.getElementsByTagAndClassName('div', 'test', parent);
+  // First we'll make sure everything has an ID
+  var tagsById = {};
+  for (var i=0; i<tags.length; i++) {
+    var tagId = tags[i].getAttribute('id');
+    if (! tagId) {
+      tagId = 'test-' + (++doctest.autoSetup._idCount);
+      tags[i].setAttribute('id', tagId);
+    }
+    // FIXME: test uniqueness here, warn
+    tagsById[tagId] = tags[i];
+  }
+  // Then fill in the labels
+  for (i=0; i<tags.length; i++) {
+    var el = document.createElement('span');
+    el.className = 'test-id';
+    var anchor = document.createElement('a');
+    anchor.setAttribute('href', '#' + tags[i].getAttribute('id'));
+    anchor.appendChild(document.createTextNode(tagId));
+    var button = document.createElement('button');
+    button.innerHTML = 'test';
+    button.setAttribute('type', 'button');
+    button.setAttribute('test-id', tags[i].getAttribute('id'));
+    button.onclick = function () {
+      location.hash = '#' + this.getAttribute('test-id');
+      location.reload();
+    };
+    el.appendChild(anchor);
+    el.appendChild(button);
+    tags[i].insertBefore(el, tags[i].childNodes[0]);
+  }
+  // Lastly, create output areas in each section
+  for (i=0; i<tags.length; i++) {
+    var outEl = doctest.getElementsByTagAndClassName('pre', 'output', tags[i]);
+    if (! outEl.length) {
+      outEl = document.createElement('pre');
+      outEl.className = 'output';
+      outEl.setAttribute('id', tags[i].getAttribute('id') + '-output');
+    }
+  }
+  if (location.hash.length > 1) {
+    // This makes the :target CSS work, since if the hash points to an
+    // element whose id has just been added, it won't be noticed
+    location.hash = location.hash;
+  }
+  var output = document.getElementById('doctestOutput');
+  if (! output) {
+    output = document.createElement('pre');
+    output.setAttribute('id', 'doctestOutput');
+    output.className = 'output';
+    tags[0].parentNode.insertBefore(output, tags[0]);
+  }
+  var reloader = document.getElementById('doctestReload');
+  if (! reloader) {
+    reloader = document.createElement('button');
+    reloader.setAttribute('type', 'button');
+    reloader.innerHTML = 'test all';
+    reloader.onclick = function () {
+      location.hash = '';
+      location.reload();
+    };
+    output.parentNode.insertBefore(reloader, output);
+  }
+};
+
+doctest.autoSetup._idCount = 0;
+
+doctest.Spy = function (name, options, extraOptions) {
   if (this === window) {
+    if (spies[name]) {
+      return spies[name];
+    }
     return new Spy(name, options);
   }
   name = name || 'spy';
   options = options || {};
+  if (typeof options == "function") {
+    options = {applies: options};
+  }
+  if (extraOptions) {
+    doctest.extendDefault(options, extraOptions);
+  }
   doctest.extendDefault(options, doctest.defaultSpyOptions);
   var self = this;
   this.name = name;
   this.options = options;
   this.called = false;
+  this.calledWait = false;
   this.args = null;
   this.self = null;
   this.argList = [];
@@ -742,6 +820,7 @@ doctest.Spy = function (name, options) {
   this.throwError = options.throwError || null;
   this.func = function () {
     self.called = true;
+    self.calledWait = true;
     self.args = doctest._argsToArray(arguments);
     self.self = this;
     self.argList.push(self.args);
@@ -764,12 +843,16 @@ doctest.Spy = function (name, options) {
   if (options.methods) {
     this.methods(options.methods);
   }
+  doctest.spies[name] = this;
+  if (options.wait) {
+    this.wait();
+  }
 };
 
 doctest.Spy.prototype.formatCall = function () {
   var s = '';
-  if (this.self !== window) {
-    s += doctest.repr(this.self, true) + '.';
+  if (this.self !== window && this.self !== this) {
+    s += doctest.repr(this.self) + '.';
   }
   s += this.name;
   if (this.args === null) {
@@ -806,7 +889,11 @@ doctest.Spy.prototype.methods = function (props) {
 doctest.Spy.prototype.wait = function (timeout) {
   var self = this;
   var func = function () {
-    return self.called;
+    var value = self.calledWait;
+    if (value) {
+      self.calledWait = false;
+    }
+    return value;
   };
   func.repr = function () {
     return 'called:'+repr(self);
@@ -828,14 +915,29 @@ doctest._argsToArray = function (args) {
 
 Spy = doctest.Spy;
 
+spies = doctest.spies = {};
+
 doctest.defaultTimeout = 2000;
 
-doctest.defaultSpyOptions = {};
+doctest.defaultSpyOptions = {writes: true};
 
 window.addEventListener('load', function () {
+  var auto = false;
+  if (/\bautodoctest\b/.exec(document.body.className)) {
+    doctest.autoSetup();
+    auto = true;
+  }
   var loc = window.location.search.substring(1);
-  if ((/doctestRun/).exec(loc)) {
-    doctest();
+  if (auto || (/doctestRun/).exec(loc)) {
+    var elements = null;
+    // FIXME: we need to put the output near the specific test being tested:
+    if (location.hash) {
+      var el = document.getElementById(location.hash.substr(1));
+      if (/\btest\b/.exec(el.className)) {
+        elements = doctest.getElementsByTagAndClassName('pre', 'doctest', el);
+      }
+    }
+    doctest(0, elements);
   }
 }, false);
 
