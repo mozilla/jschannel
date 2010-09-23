@@ -80,6 +80,7 @@ Channel.build = function(cfg) {
             validOrigin = true;
         }
     }
+    
     if (!validOrigin) throw ("Channel.build() called with an invalid origin");
 
     if (typeof cfg.scope !== 'undefined') {
@@ -169,6 +170,7 @@ Channel.build = function(cfg) {
 
         // messages must be objects
         var m = JSON.parse(e.data);
+        
         if (typeof m !== 'object') return;
 
         // first, descope method if it needs it
@@ -201,6 +203,7 @@ Channel.build = function(cfg) {
         }
 
         m.method = unscopedMethod;
+
 
         // now, what type of message is this?
         if (m.id && m.method) {
@@ -282,9 +285,13 @@ Channel.build = function(cfg) {
                 debug("ignoring invalid response: " + m.id);
             } else {
                 handled = true;
+                
                 // XXX: what if client code raises an exception here?
-                if (m.error) tranTbl[m.id].error(m.error, m.message);
-                else tranTbl[m.id].success(m.result);
+                if (m.error) {
+                    tranTbl[m.id].error(m.error, m.message);
+                } else {
+                    tranTbl[m.id].success(m.result);
+                }
                 delete tranTbl[m.id];
             }
         } else if (m.method) {
@@ -301,7 +308,7 @@ Channel.build = function(cfg) {
 
         if (handled) {
             // we got it, hands off.
-            e.stopPropagation();
+            try { e.stopPropogation(); } catch(excp) { }
         } else {
             debug("Ignoring event: " + e.data);
         }
@@ -315,14 +322,15 @@ Channel.build = function(cfg) {
 
     // a small wrapper around postmessage whose primary function is to handle the
     // case that clients start sending messages before the other end is "ready"
-    var postMessage = function(msg) {
+    var postMessage = function(msg, force) {
         if (!msg) throw "postMessage called with null message";
 
         // delay posting if we're not ready yet.
         var verb = (ready ? "post  " : "queue "); 
         debug(verb + " message: " + JSON.stringify(msg));
-        if (!ready) pendingQueue.push(msg);
-        else {
+        if (!force && !ready) {
+            pendingQueue.push(msg);
+        } else {
             if (typeof cfg.postMessageObserver === 'function') {
                 try {
                     cfg.postMessageObserver(cfg.origin, msg);
@@ -330,6 +338,7 @@ Channel.build = function(cfg) {
                     debug("postMessageObserver() raised an exception: " + e.toString());
                 }
             }
+
             cfg.window.postMessage(JSON.stringify(msg), cfg.origin);
         }
     }
@@ -349,10 +358,14 @@ Channel.build = function(cfg) {
         ready = true;
         debug('ready msg accepted.  starting transaction id: ' + curTranId);
 
-        if (type === 'ping') obj.notify({ method: '__ready', params: 'pong' });
+        if (type === 'ping') {
+            obj.notify({ method: '__ready', params: 'pong' });
+        }
 
         // flush queue
-        while (pendingQueue.length) postMessage(pendingQueue.pop(), cfg.origin);
+        while (pendingQueue.length) {
+            postMessage(pendingQueue.pop());
+        }
 
         // invoke onReady observer if provided
         if (typeof cfg.onReady === 'function') cfg.onReady(obj);
@@ -408,13 +421,14 @@ Channel.build = function(cfg) {
             // build a 'request' message and send it
             var msg = { id: curTranId, method: scopeMethod(m.method), params: m.params };
             if (callbackNames.length) msg.callbacks = callbackNames;
-            postMessage(msg);
 
             // insert into the transaction table
             tranTbl[curTranId] = { t: 'out', callbacks: callbacks, error: m.error, success: m.success };
 
             // increment next id (by 2)
             curTranId += 2;
+
+            postMessage(msg);
         },
         notify: function(m) {
             if (!m) throw 'missing arguments to notify function';
@@ -438,7 +452,9 @@ Channel.build = function(cfg) {
     };
 
     obj.bind('__ready', onReady);
-    ready = true; obj.notify({ method: '__ready', params: "ping" });  ready = false;
+    setTimeout(function() {
+        postMessage({ method: scopeMethod('__ready'), params: "ping" }, true);
+    }, 0);
 
     return obj;
 }

@@ -6,6 +6,7 @@
 
 <script type="text/javascript" src="doctestjs/doctest.js"></script>
 <link rel="stylesheet" type="text/css" href="doctestjs/doctest.css">
+<script type="text/javascript" src="json2.js"></script>
 <script type="text/javascript" src="../src/jschannel.js"></script>
 
 <style type="text/css">
@@ -90,7 +91,7 @@ emit = function() {
         f += "arguments["+i+"]";
         if (i < arguments.length -1) f += ",";
     }
-    f += ");"
+    f += ");";
     eval(f);
 }
 wait = function () { Spy('out').wait(); }

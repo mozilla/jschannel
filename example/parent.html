@@ -67,7 +67,7 @@ function docLog(which, m) {
     var tag = 'output' + which.toString();
     m = "> " + m;
     var e = document.createElement('div');
-    if (e.innerText) e.innerText = m;
+    if (typeof e.innerText !== 'undefined') e.innerText = m;
     else e.textContent = m;
     document.getElementById(tag).appendChild(e);
 }
