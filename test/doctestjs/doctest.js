@@ -419,8 +419,8 @@ doctest.JSRunner.prototype.checkResult = function (got, expected) {
     return true;
   }
   expected = RegExp.escape(expected);
-  // Note: .* doesn't match newlines, but [^] matches everything
-  expected = '^' + expected.replace(/\\\.\\\.\\\./g, "[^]*") + '$';
+  // Note: .* doesn't match newlines, [^] doesn't work on IE
+  expected = '^' + expected.replace(/\\\.\\\.\\\./g, "[^\\r\\n]*") + '$';
   expected = expected.replace(/\n/, '\\n');
   var re = new RegExp(expected);
   return got.search(re) != -1;
@@ -700,11 +700,17 @@ if (typeof repr == 'undefined') {
 }
 
 if (typeof log == 'undefined') {
-    if (typeof console != 'undefined'
-        && typeof console.log != 'undefined') {
-        log = function () {
-          console.log.apply(console, arguments);
-        };
+    
+    if (typeof window.console != 'undefined'
+        && typeof window.console.log != 'undefined')
+    {
+        if (typeof console.log.apply === 'function') {
+            log = function() {
+                console.log.apply(console, arguments);
+            }
+        } else {
+            log = console.log;
+        }
     } else {
         log = function () {
             // FIXME: do something
@@ -921,7 +927,7 @@ doctest.defaultTimeout = 2000;
 
 doctest.defaultSpyOptions = {writes: true};
 
-window.addEventListener('load', function () {
+var docTestOnLoad = function () {
   var auto = false;
   if (/\bautodoctest\b/.exec(document.body.className)) {
     doctest.autoSetup();
@@ -939,5 +945,11 @@ window.addEventListener('load', function () {
     }
     doctest(0, elements);
   }
-}, false);
+};
+
+if (window.addEventListener) {
+    window.addEventListener('load', docTestOnLoad, false);
+} else if(window.attachEvent) {
+    window.attachEvent('onload', docTestOnLoad);
+}
 
