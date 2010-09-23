@@ -60,7 +60,7 @@ Error: Channel.build() called without a valid window argument
 
 Now how about the origin parameter:
 <pre class="doctest">
-$ var tgtwin = document.getElementById("fakeChildId").contentWindow;
+$ tgtwin = document.getElementById("fakeChildId").contentWindow;
 $ Channel.build({window: tgtwin, origin: "this isn't a valid origin!"});
 Error: Channel.build() called with an invalid origin
 $ Channel.build({window: tgtwin, origin: "http://trickyco.de"}).destroy();
@@ -114,14 +114,7 @@ true
 
 Test basic query/response:
 <pre class="doctest">
-$ chan.call({
->   method: "reverse",
->   params: "hello world!",
->   success: function(v) {
->       emit(v.toString());
->   }
-> });
-$ wait();
+$ chan.call({ method: "reverse", params: "hello world!", success: function(v) { emit(v.toString()); } }); wait();
 out("!dlrow olleh")
 </pre>
 
