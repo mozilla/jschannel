@@ -137,7 +137,7 @@ out("runtime_error", "this is a string")
 $ chan.call({method: "error", params: "accidental_throw", error: emit, success: emit}); wait(); // exception content varies by browser
 out("runtime_error", ...)
 $ chan.call({method: "error", params: "smush_object", error: emit, success: emit}); wait(); // thrown objects get smushed.
-out("runtime_error", "{\"dont\":\"smush\",\"me\":\"no!!\"}")
+out("runtime_error", "{\"dont\":\"smush\",\"me\":\"no!!\"...}")
 $ chan.call({method: "error", params: "tostring_craziness", error: emit, success: emit}); wait(); // if JSON.stringify pukes, toString()
 out("runtime_error", "[object ...]")
 </pre>
