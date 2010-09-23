@@ -420,7 +420,7 @@ doctest.JSRunner.prototype.checkResult = function (got, expected) {
   }
   expected = RegExp.escape(expected);
   // Note: .* doesn't match newlines, but [^] matches everything
-  expected = '^' + expected.replace(/\\.\\.\\./g, "[^]*") + '$';
+  expected = '^' + expected.replace(/\\\.\\\.\\\./g, "[^]*") + '$';
   expected = expected.replace(/\n/, '\\n');
   var re = new RegExp(expected);
   return got.search(re) != -1;
