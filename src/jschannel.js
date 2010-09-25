@@ -131,8 +131,10 @@
             // registrations: mapping method names to call objects
             var regTbl = { };
 
-            // current (open) transactions
-            var tranTbl = { };
+            // current oustanding sent requests
+            var outTbl = { };
+            // current oustanding received requests
+            var inTbl = { };
             // are we ready yet?  when false we will block outbound messages.
             var ready = false;
             var pendingQueue = [ ];
@@ -144,7 +146,7 @@
                 return {
                     invoke: function(cbName, v) {
                         // verify in table
-                        if (!tranTbl[id]) throw "attempting to invoke a callback of a non-existant transaction: " + id;
+                        if (!inTbl[id]) throw "attempting to invoke a callback of a non-existant transaction: " + id;
                         // verify that the callback name is valid
                         var valid = false;
                         for (var i = 0; i < callbacks.length; i++) if (cbName === callbacks[i]) { valid = true; break; }
@@ -156,11 +158,10 @@
                     error: function(error, message) {
                         completed = true;
                         // verify in table
-                        if (!tranTbl[id]) throw "error called for non-existant message: " + id;
-                        if (tranTbl[id].t !== 'in') throw "error called for message we *sent*.  that's not right";
+                        if (!inTbl[id]) throw "error called for non-existant message: " + id;
 
                         // remove transaction from table
-                        delete tranTbl[id];
+                        delete inTbl[id];
 
                         // send error
                         postMessage({ id: id, error: error, message: message });
@@ -168,10 +169,9 @@
                     complete: function(v) {
                         completed = true;
                         // verify in table
-                        if (!tranTbl[id]) throw "complete called for non-existant message: " + id;
-                        if (tranTbl[id].t !== 'in') throw "complete called for message we *sent*.  that's not right";
+                        if (!inTbl[id]) throw "complete called for non-existant message: " + id;
                         // remove transaction from table
-                        delete tranTbl[id];
+                        delete inTbl[id];
                         // send complete
                         postMessage({ id: id, result: v });
                     },
@@ -238,7 +238,7 @@
                     // a request!  do we have a registered handler for this request?
                     if (regTbl[m.method]) {
                         var trans = createTransaction(m.id, m.callbacks ? m.callbacks : [ ]);
-                        tranTbl[m.id] = { t: 'in' };
+                        inTbl[m.id] = { };
                         try {
                             // callback handling.  we'll magically create functions inside the parameter list for each
                             // callback
@@ -299,28 +299,28 @@
                         handled = true;
                     }
                 } else if (m.id && m.callback) {
-                    if (!tranTbl[m.id] || tranTbl[m.id].t != 'out' ||
-                        !tranTbl[m.id].callbacks || !tranTbl[m.id].callbacks[m.callback])
+                    if (!outTbl[m.id] ||
+                        !outTbl[m.id].callbacks || !outTbl[m.id].callbacks[m.callback])
                     {
                         debug("ignoring invalid callback, id:"+m.id+ " (" + m.callback +")");
                     } else {
                         handled = true;
                         // XXX: what if client code raises an exception here?
-                        tranTbl[m.id].callbacks[m.callback](m.params);
+                        outTbl[m.id].callbacks[m.callback](m.params);
                     }
                 } else if (m.id && ((typeof m.result !== 'undefined') || m.error)) {
-                    if (!tranTbl[m.id] || tranTbl[m.id].t != 'out') {
+                    if (!outTbl[m.id]) {
                         debug("ignoring invalid response: " + m.id);
                     } else {
                         handled = true;
                         
                         // XXX: what if client code raises an exception here?
                         if (m.error) {
-                            tranTbl[m.id].error(m.error, m.message);
+                            outTbl[m.id].error(m.error, m.message);
                         } else {
-                            tranTbl[m.id].success(m.result);
+                            outTbl[m.id].success(m.result);
                         }
-                        delete tranTbl[m.id];
+                        delete outTbl[m.id];
                     }
                 } else if (m.method) {
                     // tis a notification.
@@ -450,9 +450,9 @@
                     if (callbackNames.length) msg.callbacks = callbackNames;
 
                     // insert into the transaction table
-                    tranTbl[curTranId] = { t: 'out', callbacks: callbacks, error: m.error, success: m.success };
+                    outTbl[curTranId] = { callbacks: callbacks, error: m.error, success: m.success };
 
-                    // increment next id (by 2)
+                    // increment current id
                     curTranId++;
 
                     postMessage(msg);
@@ -469,7 +469,8 @@
                     else if(window.detachEvent) window.detachEvent('onmessage', onMessage);
                     ready = false;
                     regTbl = { };
-                    tranTbl = { };
+                    inTbl = { };
+                    outTbl = { };
                     cfg.origin = null;
                     pendingQueue = [ ];
                     debug("channel destroyed");
