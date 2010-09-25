@@ -11,6 +11,29 @@
  *
  * js_channel is based heavily on json-rpc, but is focused at the
  * problem of inter-iframe RPC.
+ *
+ * Message types:
+ *  There are 5 types of messages that can flow over this channel,
+ *  and you may determine what type of message an object is by
+ *  examining its parameters:
+ *  1. Requests
+ *    + integer id
+ *    + string method
+ *    + (optional) any params
+ *  2. Callback Invocations (or just "Callbacks")
+ *    + integer id
+ *    + string callback
+ *    + (optional) params
+ *  3. Error Responses (or just "Errors)
+ *    + integer id
+ *    + string error
+ *    + (optional) string message
+ *  4. Responses
+ *    + integer id
+ *    + (optional) any result
+ *  5. Notifications
+ *    + string method
+ *    + (optional) any params 
  */
 
 ;Channel = (function() {
