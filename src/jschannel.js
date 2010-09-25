@@ -14,6 +14,12 @@
  */
 
 ;Channel = (function() {
+    // current transaction id, start out at a random *odd* number between 1 and a million
+    // There is one current transaction counter id per page, and it's shared between
+    // channel instances.  That means of all messages posted from a single javascript
+    // evaluation context, we'll never have two with the same id.
+    var curTranId = Math.floor(Math.random()*1000001);
+
     /* a messaging channel is constructed from a window and an origin.
      * the channel will assert that all messages received over the
      * channel match the origin
@@ -104,8 +110,6 @@
 
             // current (open) transactions
             var tranTbl = { };
-            // current transaction id, start out at a random *odd* number between 1 and a million
-            var curTranId = Math.floor(Math.random()*1000001) | 1;
             // are we ready yet?  when false we will block outbound messages.
             var ready = false;
             var pendingQueue = [ ];
@@ -350,14 +354,13 @@
 
                 if (type === 'ping') {
                     chanId += '-R';
-                    curTranId = curTranId+(curTranId%2);
                 } else {
                     chanId += '-L';
                 }
 
                 obj.unbind('__ready'); // now this handler isn't needed any more.
                 ready = true;
-                debug('ready msg accepted.  starting transaction id: ' + curTranId);
+                debug('ready msg accepted.');
 
                 if (type === 'ping') {
                     obj.notify({ method: '__ready', params: 'pong' });
@@ -427,7 +430,7 @@
                     tranTbl[curTranId] = { t: 'out', callbacks: callbacks, error: m.error, success: m.success };
 
                     // increment next id (by 2)
-                    curTranId += 2;
+                    curTranId++;
 
                     postMessage(msg);
                 },
@@ -444,7 +447,6 @@
                     ready = false;
                     regTbl = { };
                     tranTbl = { };
-                    curTranId = 0;
                     cfg.origin = null;
                     pendingQueue = [ ];
                     debug("channel destroyed");
