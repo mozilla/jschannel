@@ -120,17 +120,15 @@
 
             /* private variables */
             // generate a random and psuedo unique id for this channel
-            var chanId = (function ()
-                          {
-                              var text = "";
-                              var alpha = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-                              for(var i=0; i < 5; i++) text += alpha.charAt(Math.floor(Math.random() * alpha.length));
-                              return text;
-                          })();
+            var chanId = (function () {
+                var text = "";
+                var alpha = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+                for(var i=0; i < 5; i++) text += alpha.charAt(Math.floor(Math.random() * alpha.length));
+                return text;
+            })();
 
             // registrations: mapping method names to call objects
             var regTbl = { };
-
             // current oustanding sent requests
             var outTbl = { };
             // current oustanding received requests
@@ -299,8 +297,7 @@
                         handled = true;
                     }
                 } else if (m.id && m.callback) {
-                    if (!outTbl[m.id] ||
-                        !outTbl[m.id].callbacks || !outTbl[m.id].callbacks[m.callback])
+                    if (!outTbl[m.id] ||!outTbl[m.id].callbacks || !outTbl[m.id].callbacks[m.callback])
                     {
                         debug("ignoring invalid callback, id:"+m.id+ " (" + m.callback +")");
                     } else {
