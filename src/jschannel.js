@@ -87,7 +87,7 @@
 
             /* browser capabilities check */
             if (!window.postMessage) throw("jschannel cannot run this browser, no postMessage");
-            if (!window.JSON || !window.JSON.stringify || ! window.JSON.parse) throw("jschannel cannot run this browser, no native JSON handling");
+            if (!window.JSON || !window.JSON.stringify || ! window.JSON.parse) throw("jschannel cannot run this browser, no JSON parsing/serialization");
 
             /* basic argument validation */
             if (typeof cfg != 'object') throw("Channel build invoked without a proper object argument");
