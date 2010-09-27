@@ -125,7 +125,7 @@
         // route using s_boundChans
         if (typeof meth === 'string') {
             if (s_boundChans[o] && s_boundChans[o][s]) {
-                s_boundChans[origin][scope](o, meth, m);
+                s_boundChans[o][s](o, meth, m);
             } else if (s_boundChans['*'] && s_boundChans['*'][s]) {
                 s_boundChans['*'][s](o, meth, m);
             }
