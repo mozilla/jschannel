@@ -236,11 +236,12 @@
             var ready = false;
             var pendingQueue = [ ];
 
-            var createTransaction = function(id,callbacks) {
+            var createTransaction = function(id,origin,callbacks) {
                 var shouldDelayReturn = false;
                 var completed = false;
 
                 return {
+                    origin: origin,
                     invoke: function(cbName, v) {
                         // verify in table
                         if (!inTbl[id]) throw "attempting to invoke a callback of a non-existant transaction: " + id;
@@ -302,7 +303,7 @@
                 if (m.id && method) {
                     // a request!  do we have a registered handler for this request?
                     if (regTbl[method]) {
-                        var trans = createTransaction(m.id, m.callbacks ? m.callbacks : [ ]);
+                        var trans = createTransaction(m.id, origin, m.callbacks ? m.callbacks : [ ]);
                         inTbl[m.id] = { };
                         try {
                             // callback handling.  we'll magically create functions inside the parameter list for each
