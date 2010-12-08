@@ -371,7 +371,7 @@
                         // XXX: what if client code raises an exception here?
                         outTbl[m.id].callbacks[m.callback](m.params);
                     }
-                } else if (m.id && ((typeof m.result !== 'undefined') || m.error)) {
+                } else if (m.id) {
                     if (!outTbl[m.id]) {
                         debug("ignoring invalid response: " + m.id);
                     } else {
