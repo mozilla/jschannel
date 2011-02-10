@@ -379,7 +379,8 @@
                         if (m.error) {
                             outTbl[m.id].error(m.error, m.message);
                         } else {
-                            outTbl[m.id].success(m.result);
+                          if (m.result !== undefined) outTbl[m.id].success(m.result);
+                          else outTbl[m.id].success();
                         }
                         delete outTbl[m.id];
                         delete s_transIds[m.id];
