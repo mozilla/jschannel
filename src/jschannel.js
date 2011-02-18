@@ -33,7 +33,7 @@
  *    + (optional) any result
  *  5. Notifications
  *    + string method
- *    + (optional) any params 
+ *    + (optional) any params
  */
 
 ;Channel = (function() {
@@ -72,7 +72,7 @@
                 exists = true;
             }
         }
-        if (exists) throw "A channel already exists which overlaps with origin '"+ origin +"' and has scope '"+scope+"'"; 
+        if (exists) throw "A channel already exists which overlaps with origin '"+ origin +"' and has scope '"+scope+"'";
 
         if (typeof s_boundChans[origin] != 'object') s_boundChans[origin] = { };
         s_boundChans[origin][scope] = handler;
@@ -81,6 +81,13 @@
     function s_removeBoundChan(origin, scope) {
         delete s_boundChans[origin][scope];
         // possibly leave a empty object around.  whatevs.
+    }
+
+    function s_isArray(obj) {
+      if (Array.isArray) return Array.isArray(obj);
+      else {
+        return (obj.constructor.toString().indexOf("Array") != -1);
+      }
     }
 
     // No two outstanding outbound messages may have the same id, period.  Given that, a single table
@@ -101,7 +108,7 @@
         var s = null;
         var i = null;
         var meth = null;
-        
+
         if (typeof m.method === 'string') {
             var ar = m.method.split('::');
             if (ar.length == 2) {
@@ -209,7 +216,7 @@
                     validOrigin = true;
                 }
             }
-            
+
             if (!validOrigin) throw ("Channel.build() called with an invalid origin");
 
             if (typeof cfg.scope !== 'undefined') {
@@ -308,7 +315,7 @@
                         try {
                             // callback handling.  we'll magically create functions inside the parameter list for each
                             // callback
-                            if (m.callbacks && m.callbacks instanceof Array && m.callbacks.length > 0) {
+                            if (m.callbacks && s_isArray(m.callbacks) && m.callbacks.length > 0) {
                                 for (var i = 0; i < m.callbacks.length; i++) {
                                     var path = m.callbacks[i];
                                     var obj = m.params;
@@ -338,7 +345,7 @@
                             } else if (typeof e === 'object') {
                                 // either an array or an object
                                 // * if its an array of length two, then  array[0] is the code, array[1] is the error message
-                                if (e && e instanceof Array && e.length == 2) {
+                                if (e && s_isArray(e) && e.length == 2) {
                                     error = e[0];
                                     message = e[1];
                                 }
@@ -377,10 +384,10 @@
                     } else {
                         // XXX: what if client code raises an exception here?
                         if (m.error) {
-                            outTbl[m.id].error(m.error, m.message);
+                            (1,outTbl[m.id].error)(m.error, m.message);
                         } else {
-                          if (m.result !== undefined) outTbl[m.id].success(m.result);
-                          else outTbl[m.id].success();
+                          if (m.result !== undefined) (1,outTbl[m.id].success)(m.result);
+                          else (1,outTbl[m.id].success)();
                         }
                         delete outTbl[m.id];
                         delete s_transIds[m.id];
@@ -400,7 +407,7 @@
             // now register our bound channel for msg routing
             s_addBoundChan(cfg.origin, ((typeof cfg.scope === 'string') ? cfg.scope : ''), onMessage);
 
-            // scope method names based on cfg.scope specified when the Channel was instantiated 
+            // scope method names based on cfg.scope specified when the Channel was instantiated
             var scopeMethod = function(m) {
                 if (typeof cfg.scope === 'string' && cfg.scope.length) m = [cfg.scope, m].join("::");
                 return m;
@@ -412,7 +419,7 @@
                 if (!msg) throw "postMessage called with null message";
 
                 // delay posting if we're not ready yet.
-                var verb = (ready ? "post  " : "queue "); 
+                var verb = (ready ? "post  " : "queue ");
                 debug(verb + " message: " + JSON.stringify(msg));
                 if (!force && !ready) {
                     pendingQueue.push(msg);
@@ -516,7 +523,7 @@
                     if (!m) throw 'missing arguments to notify function';
                     if (!m.method || typeof m.method !== 'string') throw "'method' argument to notify must be string";
 
-                    // no need to go into any transaction table 
+                    // no need to go into any transaction table
                     postMessage({ method: scopeMethod(m.method), params: m.params });
                 },
                 destroy: function () {
