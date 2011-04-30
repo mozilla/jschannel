@@ -43,8 +43,8 @@
     // evaluation context, we'll never have two with the same id.
     var s_curTranId = Math.floor(Math.random()*1000001);
 
-    // no two bound channels in the same javascript evaluation context may have the same origin & scope.
-    // futher if two bound channels have the same scope, they may not have *overlapping* origins
+    // no two bound channels in the same javascript evaluation context may have the same origin, scope, and window.
+    // futher if two bound channels have the same window and scope, they may not have *overlapping* origins
     // (either one or both support '*').  This restriction allows a single onMessage handler to efficiently
     // route messages based on origin and scope.  The s_boundChans maps origins to scopes, to message
     // handlers.  Request and Notification messages are routed using this table.
@@ -52,34 +52,39 @@
     var s_boundChans = { };
 
     // add a channel to s_boundChans, throwing if a dup exists
-    function s_addBoundChan(origin, scope, handler) {
+    function s_addBoundChan(win, origin, scope, handler) {
         // does she exist?
         var exists = false;
-        if (origin === '*') {
-            // we must check all other origins, sadly.
-            for (var k in s_boundChans) {
-                if (!s_boundChans.hasOwnProperty(k)) continue;
-                if (k === '*') continue;
-                if (typeof s_boundChans[k][scope] === 'object') {
+        var bcforwin = s_boundChans ? s_boundChans[win] : undefined;
+        if (typeof bcforwin === 'object') {
+            if (origin === '*') {
+                // we must check all other origins, sadly.
+                for (var k in bcforwin) {
+                    if (!bcforwin.hasOwnProperty(k)) continue;
+                    if (k === '*') continue;
+                    if (typeof bcforwin[k][scope] === 'object') {
+                        exists = true;
+                    }
+                }
+            } else {
+                // we must check only '*'
+                if ((bcforwin['*'] && bcforwin['*'][scope]) ||
+                    (bcforwin[origin] && bcforwin[origin][scope]))
+                {
                     exists = true;
                 }
-            }
-        } else {
-            // we must check only '*'
-            if ((s_boundChans['*'] && s_boundChans['*'][scope]) ||
-                (s_boundChans[origin] && s_boundChans[origin][scope]))
-            {
-                exists = true;
             }
         }
         if (exists) throw "A channel already exists which overlaps with origin '"+ origin +"' and has scope '"+scope+"'";
 
-        if (typeof s_boundChans[origin] != 'object') s_boundChans[origin] = { };
-        s_boundChans[origin][scope] = handler;
+        if (typeof s_boundChans[win] != 'object') s_boundChans[win] = { };
+        if (typeof s_boundChans[win][origin] != 'object')
+            s_boundChans[win][origin] = { };
+        s_boundChans[win][origin][scope] = handler;
     }
 
-    function s_removeBoundChan(origin, scope) {
-        delete s_boundChans[origin][scope];
+    function s_removeBoundChan(win, origin, scope) {
+        delete s_boundChans[win][origin][scope];
         // possibly leave a empty object around.  whatevs.
     }
 
@@ -104,6 +109,7 @@
         var m = JSON.parse(e.data);
         if (typeof m !== 'object') return;
 
+        var w = e.source;
         var o = e.origin;
         var s = null;
         var i = null;
@@ -121,6 +127,7 @@
 
         if (typeof m.id !== 'undefined') i = m.id;
 
+        // w is message source window
         // o is message origin
         // m is parsed message
         // s is message scope
@@ -131,10 +138,12 @@
         // if it has a method it's either a notification or a request,
         // route using s_boundChans
         if (typeof meth === 'string') {
-            if (s_boundChans[o] && s_boundChans[o][s]) {
-                s_boundChans[o][s](o, meth, m);
-            } else if (s_boundChans['*'] && s_boundChans['*'][s]) {
-                s_boundChans['*'][s](o, meth, m);
+            if (s_boundChans[w]) {
+                if (s_boundChans[w][o] && s_boundChans[w][o][s]) {
+                    s_boundChans[w][o][s](o, meth, m);
+                } else if (s_boundChans[w]['*'] && s_boundChans[w]['*'][s]) {
+                    s_boundChans[w]['*'][s](o, meth, m);
+                }
             }
         }
         // otherwise it must have an id (or be poorly formed
@@ -405,7 +414,7 @@
             }
 
             // now register our bound channel for msg routing
-            s_addBoundChan(cfg.origin, ((typeof cfg.scope === 'string') ? cfg.scope : ''), onMessage);
+            s_addBoundChan(cfg.window, cfg.origin, ((typeof cfg.scope === 'string') ? cfg.scope : ''), onMessage);
 
             // scope method names based on cfg.scope specified when the Channel was instantiated
             var scopeMethod = function(m) {
@@ -527,7 +536,7 @@
                     postMessage({ method: scopeMethod(m.method), params: m.params });
                 },
                 destroy: function () {
-                    s_removeBoundChan(cfg.origin, ((typeof cfg.scope === 'string') ? cfg.scope : ''));
+                    s_removeBoundChan(cfg.window, cfg.origin, ((typeof cfg.scope === 'string') ? cfg.scope : ''));
                     if (window.removeEventListener) window.removeEventListener('message', onMessage, false);
                     else if(window.detachEvent) window.detachEvent('onmessage', onMessage);
                     ready = false;
