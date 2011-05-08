@@ -378,12 +378,12 @@
                                 message = e;
                             } else if (typeof e === 'object') {
                                 // either an array or an object
-                                // * if its an array of length two, then  array[0] is the code, array[1] is the error message
+                                // * if it's an array of length two, then  array[0] is the code, array[1] is the error message
                                 if (e && s_isArray(e) && e.length == 2) {
                                     error = e[0];
                                     message = e[1];
                                 }
-                                // * if its an object then we'll look form error and message parameters
+                                // * if it's an object then we'll look form error and message parameters
                                 else if (typeof e.error === 'string') {
                                     error = e.error;
                                     if (!e.message) message = "";
