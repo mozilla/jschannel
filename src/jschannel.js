@@ -373,7 +373,7 @@
                             // automagic handling of exceptions:
                             var error = "runtime_error";
                             var message = null;
-                            // * if its a string then it gets an error code of 'runtime_error' and string is the message
+                            // * if it's a string then it gets an error code of 'runtime_error' and string is the message
                             if (typeof e === 'string') {
                                 message = e;
                             } else if (typeof e === 'object') {
