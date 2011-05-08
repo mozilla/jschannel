@@ -187,7 +187,7 @@
      *
      * Arguments to Channel.build(cfg):
      *
-     *   cfg.window - the remote window with which we'll communication
+     *   cfg.window - the remote window with which we'll communicate
      *   cfg.origin - the expected origin of the remote window, may be '*'
      *                which matches any origin
      *   cfg.scope  - the 'scope' of messages.  a scope string that is
