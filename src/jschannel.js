@@ -285,7 +285,7 @@
                     origin: origin,
                     invoke: function(cbName, v) {
                         // verify in table
-                        if (!inTbl[id]) throw "attempting to invoke a callback of a non-existant transaction: " + id;
+                        if (!inTbl[id]) throw "attempting to invoke a callback of a nonexistent transaction: " + id;
                         // verify that the callback name is valid
                         var valid = false;
                         for (var i = 0; i < callbacks.length; i++) if (cbName === callbacks[i]) { valid = true; break; }
@@ -297,7 +297,7 @@
                     error: function(error, message) {
                         completed = true;
                         // verify in table
-                        if (!inTbl[id]) throw "error called for non-existant message: " + id;
+                        if (!inTbl[id]) throw "error called for nonexistent message: " + id;
 
                         // remove transaction from table
                         delete inTbl[id];
@@ -308,7 +308,7 @@
                     complete: function(v) {
                         completed = true;
                         // verify in table
-                        if (!inTbl[id]) throw "complete called for non-existant message: " + id;
+                        if (!inTbl[id]) throw "complete called for nonexistent message: " + id;
                         // remove transaction from table
                         delete inTbl[id];
                         // send complete
