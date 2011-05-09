@@ -64,8 +64,10 @@ $ tgtwin = document.getElementById("fakeChildId").contentWindow;
 $ Channel.build({window: tgtwin, origin: "this isn't a valid origin!"});
 Error: Channel.build() called with an invalid origin
 $ Channel.build({window: tgtwin, origin: "http://trickyco.de"}).destroy();
-$ Channel.build({window: tgtwin, origin: "http://trickyco.de:8080"}).destroy();
-$ Channel.build({window: tgtwin, origin: "http://trickyco.de:8080/"}).destroy();
+$ Channel.build({window: tgtwin,
+>                origin: "http://trickyco.de:8080"}).destroy();
+$ Channel.build({window: tgtwin,
+>                origin: "http://trickyco.de:8080/"}).destroy();
 $ Channel.build({window: tgtwin, origin: "http://localhost"}).destroy();
 $ Channel.build({window: tgtwin, origin: "http://localhost:1234"}).destroy();
 $ Channel.build({window: tgtwin, origin: "http://10.0.1.104:1234"}).destroy();
@@ -74,11 +76,21 @@ $ Channel.build({window: tgtwin, origin: "http://10.0.1.104:1234"}).destroy();
 Scope parameter
 <pre class="doctest">
 $ var tgtwin = document.getElementById("fakeChildId").contentWindow;
-$ Channel.build({window: tgtwin, origin: "http://trickyco.de", scope: "goodScope"}).destroy();
-$ Channel.build({window: tgtwin, origin: "http://trickyco.de", scope: "speshulScope!@#%^@**(#(%*<>';][,.';'"}).destroy();
-$ Channel.build({window: tgtwin, origin: "http://trickyco.de", scope: "closeTo:BadScope"}).destroy();
-$ Channel.build({window: tgtwin, origin: "http://trickyco.de", scope: "closer:T:o:B:a:dScope"}).destroy();
-$ Channel.build({window: tgtwin, origin: "http://trickyco.de", scope: "veryBad::Scope"});
+$ Channel.build({window: tgtwin,
+>                origin: "http://trickyco.de",
+>                scope: "goodScope"}).destroy();
+$ Channel.build({window: tgtwin,
+>                origin: "http://trickyco.de",
+>                scope: "speshulScope!@#%^@**(#(%*<>';][,.';'"}).destroy();
+$ Channel.build({window: tgtwin,
+>                origin: "http://trickyco.de",
+>                scope: "closeTo:BadScope"}).destroy();
+$ Channel.build({window: tgtwin,
+>                origin: "http://trickyco.de",
+>                scope: "closer:T:o:B:a:dScope"}).destroy();
+$ Channel.build({window: tgtwin,
+>                origin: "http://trickyco.de",
+>                scope: "veryBad::Scope"});
 Error: scope may not contain double colons: '::'
 </pre>
 
@@ -114,40 +126,83 @@ true
 
 Test basic query/response:
 <pre class="doctest">
-$ chan.call({ method: "reverse", params: "hello world!", success: function(v) { emit(v.toString()); } }); wait();
+$ chan.call({ method: "reverse",
+>             params: "hello world!",
+>             success: function(v) { emit(v.toString()); } });
+> wait();
 out("!dlrow olleh")
 </pre>
 
 Test all flavors of error responses
 <pre class="doctest">
-$ chan.call({method: "error", error: emit, success: emit}); wait();
+$ chan.call({method: "error",
+>            error: emit,
+>            success: emit});
+> wait();
 out("parameter_required", "you're missing the 'type of error to emit' parameter, doofus")
-$ chan.call({method: "error", params: "throw_array", error: emit, success: emit}); wait();
+$ chan.call({method: "error",
+>            params: "throw_array",
+>            error: emit,
+>            success: emit});
+> wait();
 out("array_error_code", "array error message")
-$ chan.call({method: "error", params: "throw_object", error: emit, success: emit}); wait();
+$ chan.call({method: "error",
+>            params: "throw_object",
+>            error: emit,
+>            success: emit});
+> wait();
 out("object_error_code", "object error message")
-$ chan.call({method: "error", params: "throw_string", error: emit, success: emit}); wait();
+$ chan.call({method: "error",
+>            params: "throw_string",
+>            error: emit,
+>            success: emit});
+> wait();
 out("runtime_error", "this is a string")
-$ chan.call({method: "error", params: "accidental_throw", error: emit, success: emit}); wait(); // exception content varies by browser
+$ chan.call({method: "error",
+>            params: "accidental_throw",
+>            error: emit, 
+>            success: emit});
+> wait(); // exception content varies by browser
 out("runtime_error", ...)
-$ chan.call({method: "error", params: "smush_object", error: emit, success: emit}); wait(); // thrown objects get smushed.
+$ chan.call({method: "error",
+>            params: "smush_object",
+>            error: emit,
+>            success: emit});
+> wait(); // thrown objects get smushed.
 out("runtime_error", "{\"dont\":\"smush\",\"me\":\"no!!\"...}")
-$ chan.call({method: "error", params: "tostring_craziness", error: emit, success: emit}); wait(); // if JSON.stringify pukes, toString()
+$ chan.call({method: "error",
+>            params: "tostring_craziness",
+>            error: emit,
+>            success: emit});
+> wait(); // if JSON.stringify pukes, toString()
 out("runtime_error", "[object ...]")
 </pre>
 
 <h2>callbacks</h2>
 <pre class="doctest">
-$ chan.call({method: "caller_backer", params: { cb: emit }, success: emit}); wait();
+$ chan.call({method: "caller_backer",
+>            params: { cb: emit },
+>            success: emit});
+> wait();
 out("you called?")
 out("complete")
-$ chan.call({method: "caller_backer", params: { cb2: emit }, success: emit}); wait();
+$ chan.call({method: "caller_backer",
+>            params: { cb2: emit },
+>            success: emit});
+> wait();
 out("you called again!?")
 out("complete")
-$ chan.call({method: "caller_backer", params: { nested: { cb: emit } }, success: emit}); wait();
+$ chan.call({method: "caller_backer",
+>            params: { nested: { cb: emit } },
+>            success: emit});
+> wait();
 out("STOP CALLING ME!")
 out("complete")
-$ chan.call({method: "caller_backer", params: { cb: emit, cb2: emit, nested: { cb: emit } }, error: emit, success: emit}); wait();
+$ chan.call({method: "caller_backer",
+>            params: { cb: emit, cb2: emit, nested: { cb: emit } }, 
+>            error: emit,
+>            success: emit});
+> wait();
 out("you called?")
 out("you called again!?")
 out("STOP CALLING ME!")
@@ -156,11 +211,23 @@ out("complete")
 
 <h2>echo test</h2>
 <pre class="doctest">
-$ chan.call({method: "echo", params: 0, success: emit, error: emit}); wait();
+$ chan.call({method: "echo",
+>            params: 0,
+>            success: emit,
+>            error: emit});
+> wait();
 out(0)
-$ chan.call({method: "echo", params: null, success: emit, error: emit}); wait();
+$ chan.call({method: "echo",
+>            params: null,
+>            success: emit,
+>            error: emit});
+> wait();
 out(null)
-$ chan.call({method: "echo", params: false, success: emit, error: emit}); wait();
+$ chan.call({method: "echo",
+>            params: false,
+>            success: emit,
+>            error: emit});
+> wait();
 out(false)
 </pre>
 
