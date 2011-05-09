@@ -8,10 +8,40 @@
 <link rel="stylesheet" type="text/css" href="doctestjs/doctest.css">
 <script type="text/javascript" src="json2.js"></script>
 <script type="text/javascript" src="../src/jschannel.js"></script>
+<script>
+function loadChildCodeSnippets() {
+  var child = document.getElementById("childId");
+  var snippets = document.getElementsByClassName("child-code-snippet");
+  for (var i = 0; i < snippets.length; i++) {
+    var snippet = snippets[i];
+    var script = child.contentDocument.getElementById(snippet.id);
+    if (script) {
+      var code = document.createElement("code");
+      var header = document.createElement("div");
+      header.textContent = "This test depends on the following code, " +
+                           "defined in the child frame.";
+      code.textContent = script.textContent;
+      snippet.appendChild(header);
+      snippet.appendChild(code);
+    }
+  }
+}
 
+if (window.addEventListener)
+  window.addEventListener("load", loadChildCodeSnippets, false);
+</script>
 <style type="text/css">
 body {
     font-family: "Helvetica,Arial,FreeSans";
+}
+div.child-code-snippet {
+  background: #e0e0e0;
+  padding: 1em;
+}
+div.child-code-snippet code {
+  display: block;
+  font-family: monospace;
+  white-space: pre-wrap;
 }
 #container {
   margin: 0 auto;
@@ -124,7 +154,10 @@ $ onReadyCalled;
 true
 </pre>
 
-Test basic query/response:
+<p>Test basic query/response:</p>
+
+<div class="child-code-snippet" id="basic-query-response"></div>
+
 <pre class="doctest">
 $ chan.call({ method: "reverse",
 >             params: "hello world!",
@@ -133,7 +166,10 @@ $ chan.call({ method: "reverse",
 out("!dlrow olleh")
 </pre>
 
-Test all flavors of error responses
+<p>Test all flavors of error responses</p>
+
+<div class="child-code-snippet" id="error-responses"></div>
+
 <pre class="doctest">
 $ chan.call({method: "error",
 >            error: emit,
@@ -179,6 +215,9 @@ out("runtime_error", "[object ...]")
 </pre>
 
 <h2>callbacks</h2>
+
+<div class="child-code-snippet" id="callbacks"></div>
+
 <pre class="doctest">
 $ chan.call({method: "caller_backer",
 >            params: { cb: emit },
@@ -210,6 +249,9 @@ out("complete")
 </pre>
 
 <h2>echo test</h2>
+
+<div class="child-code-snippet" id="echo"></div>
+
 <pre class="doctest">
 $ chan.call({method: "echo",
 >            params: 0,
