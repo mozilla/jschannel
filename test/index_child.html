@@ -9,11 +9,15 @@
 <script>
 
 var chan = Channel.build({window: window.parent, origin: "*", scope: "testScope"});
+</script>
 
+<script id="basic-query-response">
 chan.bind("reverse", function(trans, s) {
     return s.split("").reverse().join("");
 });
+</script>
 
+<script id="error-responses">
 chan.bind("error", function(trans, s) {
     if (s === "throw_array") throw [ "array_error_code", 'array error message'];
     else if (s === "throw_object") throw { error: "object_error_code", message: 'object error message' };
@@ -25,20 +29,25 @@ chan.bind("error", function(trans, s) {
     // otherwise, invoke the error call on the transaction object
     trans.error("parameter_required", "you're missing the 'type of error to emit' parameter, doofus");
 });
+</script>
 
+<script>
 chan.bind("sendNotification", function(trans, s) {
     chan.notify({method: "notify", params: "Hi my name is Simon, and I like to do drawings!" });
 });
+</script>
 
+<script id="callbacks">
 chan.bind("caller_backer", function(trans, a) {
     if (a.cb) a.cb("you called?");
     if (a.cb2) a.cb2("you called again!?");
     if (a.nested && a.nested.cb) a.nested.cb("STOP CALLING ME!");
     trans.complete("complete");
 });
+</script>
 
+<script id="echo">
 chan.bind("echo", function(trans, a) { return a });
-
 </script>
 </head>
 </html>

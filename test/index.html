@@ -8,10 +8,40 @@
 <link rel="stylesheet" type="text/css" href="doctestjs/doctest.css">
 <script type="text/javascript" src="json2.js"></script>
 <script type="text/javascript" src="../src/jschannel.js"></script>
+<script>
+function loadChildCodeSnippets() {
+  var child = document.getElementById("childId");
+  var snippets = document.getElementsByClassName("child-code-snippet");
+  for (var i = 0; i < snippets.length; i++) {
+    var snippet = snippets[i];
+    var script = child.contentDocument.getElementById(snippet.id);
+    if (script) {
+      var code = document.createElement("code");
+      var header = document.createElement("div");
+      header.textContent = "This test depends on the following code, " +
+                           "defined in the child frame.";
+      code.textContent = script.textContent;
+      snippet.appendChild(header);
+      snippet.appendChild(code);
+    }
+  }
+}
 
+if (window.addEventListener)
+  window.addEventListener("load", loadChildCodeSnippets, false);
+</script>
 <style type="text/css">
 body {
     font-family: "Helvetica,Arial,FreeSans";
+}
+div.child-code-snippet {
+  background: #e0e0e0;
+  padding: 1em;
+}
+div.child-code-snippet code {
+  display: block;
+  font-family: monospace;
+  white-space: pre-wrap;
 }
 #container {
   margin: 0 auto;
@@ -64,8 +94,10 @@ $ tgtwin = document.getElementById("fakeChildId").contentWindow;
 $ Channel.build({window: tgtwin, origin: "this isn't a valid origin!"});
 Error: Channel.build() called with an invalid origin
 $ Channel.build({window: tgtwin, origin: "http://trickyco.de"}).destroy();
-$ Channel.build({window: tgtwin, origin: "http://trickyco.de:8080"}).destroy();
-$ Channel.build({window: tgtwin, origin: "http://trickyco.de:8080/"}).destroy();
+$ Channel.build({window: tgtwin,
+>                origin: "http://trickyco.de:8080"}).destroy();
+$ Channel.build({window: tgtwin,
+>                origin: "http://trickyco.de:8080/"}).destroy();
 $ Channel.build({window: tgtwin, origin: "http://localhost"}).destroy();
 $ Channel.build({window: tgtwin, origin: "http://localhost:1234"}).destroy();
 $ Channel.build({window: tgtwin, origin: "http://10.0.1.104:1234"}).destroy();
@@ -74,11 +106,21 @@ $ Channel.build({window: tgtwin, origin: "http://10.0.1.104:1234"}).destroy();
 Scope parameter
 <pre class="doctest">
 $ var tgtwin = document.getElementById("fakeChildId").contentWindow;
-$ Channel.build({window: tgtwin, origin: "http://trickyco.de", scope: "goodScope"}).destroy();
-$ Channel.build({window: tgtwin, origin: "http://trickyco.de", scope: "speshulScope!@#%^@**(#(%*<>';][,.';'"}).destroy();
-$ Channel.build({window: tgtwin, origin: "http://trickyco.de", scope: "closeTo:BadScope"}).destroy();
-$ Channel.build({window: tgtwin, origin: "http://trickyco.de", scope: "closer:T:o:B:a:dScope"}).destroy();
-$ Channel.build({window: tgtwin, origin: "http://trickyco.de", scope: "veryBad::Scope"});
+$ Channel.build({window: tgtwin,
+>                origin: "http://trickyco.de",
+>                scope: "goodScope"}).destroy();
+$ Channel.build({window: tgtwin,
+>                origin: "http://trickyco.de",
+>                scope: "speshulScope!@#%^@**(#(%*<>';][,.';'"}).destroy();
+$ Channel.build({window: tgtwin,
+>                origin: "http://trickyco.de",
+>                scope: "closeTo:BadScope"}).destroy();
+$ Channel.build({window: tgtwin,
+>                origin: "http://trickyco.de",
+>                scope: "closer:T:o:B:a:dScope"}).destroy();
+$ Channel.build({window: tgtwin,
+>                origin: "http://trickyco.de",
+>                scope: "veryBad::Scope"});
 Error: scope may not contain double colons: '::'
 </pre>
 
@@ -112,42 +154,94 @@ $ onReadyCalled;
 true
 </pre>
 
-Test basic query/response:
+<p>Test basic query/response:</p>
+
+<div class="child-code-snippet" id="basic-query-response"></div>
+
 <pre class="doctest">
-$ chan.call({ method: "reverse", params: "hello world!", success: function(v) { emit(v.toString()); } }); wait();
+$ chan.call({ method: "reverse",
+>             params: "hello world!",
+>             success: function(v) { emit(v.toString()); } });
+> wait();
 out("!dlrow olleh")
 </pre>
 
-Test all flavors of error responses
+<p>Test all flavors of error responses</p>
+
+<div class="child-code-snippet" id="error-responses"></div>
+
 <pre class="doctest">
-$ chan.call({method: "error", error: emit, success: emit}); wait();
+$ chan.call({method: "error",
+>            error: emit,
+>            success: emit});
+> wait();
 out("parameter_required", "you're missing the 'type of error to emit' parameter, doofus")
-$ chan.call({method: "error", params: "throw_array", error: emit, success: emit}); wait();
+$ chan.call({method: "error",
+>            params: "throw_array",
+>            error: emit,
+>            success: emit});
+> wait();
 out("array_error_code", "array error message")
-$ chan.call({method: "error", params: "throw_object", error: emit, success: emit}); wait();
+$ chan.call({method: "error",
+>            params: "throw_object",
+>            error: emit,
+>            success: emit});
+> wait();
 out("object_error_code", "object error message")
-$ chan.call({method: "error", params: "throw_string", error: emit, success: emit}); wait();
+$ chan.call({method: "error",
+>            params: "throw_string",
+>            error: emit,
+>            success: emit});
+> wait();
 out("runtime_error", "this is a string")
-$ chan.call({method: "error", params: "accidental_throw", error: emit, success: emit}); wait(); // exception content varies by browser
+$ chan.call({method: "error",
+>            params: "accidental_throw",
+>            error: emit, 
+>            success: emit});
+> wait(); // exception content varies by browser
 out("runtime_error", ...)
-$ chan.call({method: "error", params: "smush_object", error: emit, success: emit}); wait(); // thrown objects get smushed.
+$ chan.call({method: "error",
+>            params: "smush_object",
+>            error: emit,
+>            success: emit});
+> wait(); // thrown objects get smushed.
 out("runtime_error", "{\"dont\":\"smush\",\"me\":\"no!!\"...}")
-$ chan.call({method: "error", params: "tostring_craziness", error: emit, success: emit}); wait(); // if JSON.stringify pukes, toString()
+$ chan.call({method: "error",
+>            params: "tostring_craziness",
+>            error: emit,
+>            success: emit});
+> wait(); // if JSON.stringify pukes, toString()
 out("runtime_error", "[object ...]")
 </pre>
 
 <h2>callbacks</h2>
+
+<div class="child-code-snippet" id="callbacks"></div>
+
 <pre class="doctest">
-$ chan.call({method: "caller_backer", params: { cb: emit }, success: emit}); wait();
+$ chan.call({method: "caller_backer",
+>            params: { cb: emit },
+>            success: emit});
+> wait();
 out("you called?")
 out("complete")
-$ chan.call({method: "caller_backer", params: { cb2: emit }, success: emit}); wait();
+$ chan.call({method: "caller_backer",
+>            params: { cb2: emit },
+>            success: emit});
+> wait();
 out("you called again!?")
 out("complete")
-$ chan.call({method: "caller_backer", params: { nested: { cb: emit } }, success: emit}); wait();
+$ chan.call({method: "caller_backer",
+>            params: { nested: { cb: emit } },
+>            success: emit});
+> wait();
 out("STOP CALLING ME!")
 out("complete")
-$ chan.call({method: "caller_backer", params: { cb: emit, cb2: emit, nested: { cb: emit } }, error: emit, success: emit}); wait();
+$ chan.call({method: "caller_backer",
+>            params: { cb: emit, cb2: emit, nested: { cb: emit } }, 
+>            error: emit,
+>            success: emit});
+> wait();
 out("you called?")
 out("you called again!?")
 out("STOP CALLING ME!")
@@ -155,12 +249,27 @@ out("complete")
 </pre>
 
 <h2>echo test</h2>
+
+<div class="child-code-snippet" id="echo"></div>
+
 <pre class="doctest">
-$ chan.call({method: "echo", params: 0, success: emit, error: emit}); wait();
+$ chan.call({method: "echo",
+>            params: 0,
+>            success: emit,
+>            error: emit});
+> wait();
 out(0)
-$ chan.call({method: "echo", params: null, success: emit, error: emit}); wait();
+$ chan.call({method: "echo",
+>            params: null,
+>            success: emit,
+>            error: emit});
+> wait();
 out(null)
-$ chan.call({method: "echo", params: false, success: emit, error: emit}); wait();
+$ chan.call({method: "echo",
+>            params: false,
+>            success: emit,
+>            error: emit});
+> wait();
 out(false)
 </pre>
 

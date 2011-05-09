@@ -187,7 +187,7 @@
      *
      * Arguments to Channel.build(cfg):
      *
-     *   cfg.window - the remote window with which we'll communication
+     *   cfg.window - the remote window with which we'll communicate
      *   cfg.origin - the expected origin of the remote window, may be '*'
      *                which matches any origin
      *   cfg.scope  - the 'scope' of messages.  a scope string that is
@@ -285,7 +285,7 @@
                     origin: origin,
                     invoke: function(cbName, v) {
                         // verify in table
-                        if (!inTbl[id]) throw "attempting to invoke a callback of a non-existant transaction: " + id;
+                        if (!inTbl[id]) throw "attempting to invoke a callback of a nonexistent transaction: " + id;
                         // verify that the callback name is valid
                         var valid = false;
                         for (var i = 0; i < callbacks.length; i++) if (cbName === callbacks[i]) { valid = true; break; }
@@ -297,7 +297,7 @@
                     error: function(error, message) {
                         completed = true;
                         // verify in table
-                        if (!inTbl[id]) throw "error called for non-existant message: " + id;
+                        if (!inTbl[id]) throw "error called for nonexistent message: " + id;
 
                         // remove transaction from table
                         delete inTbl[id];
@@ -308,7 +308,7 @@
                     complete: function(v) {
                         completed = true;
                         // verify in table
-                        if (!inTbl[id]) throw "complete called for non-existant message: " + id;
+                        if (!inTbl[id]) throw "complete called for nonexistent message: " + id;
                         // remove transaction from table
                         delete inTbl[id];
                         // send complete
@@ -373,17 +373,17 @@
                             // automagic handling of exceptions:
                             var error = "runtime_error";
                             var message = null;
-                            // * if its a string then it gets an error code of 'runtime_error' and string is the message
+                            // * if it's a string then it gets an error code of 'runtime_error' and string is the message
                             if (typeof e === 'string') {
                                 message = e;
                             } else if (typeof e === 'object') {
                                 // either an array or an object
-                                // * if its an array of length two, then  array[0] is the code, array[1] is the error message
+                                // * if it's an array of length two, then  array[0] is the code, array[1] is the error message
                                 if (e && s_isArray(e) && e.length == 2) {
                                     error = e[0];
                                     message = e[1];
                                 }
-                                // * if its an object then we'll look form error and message parameters
+                                // * if it's an object then we'll look form error and message parameters
                                 else if (typeof e.error === 'string') {
                                     error = e.error;
                                     if (!e.message) message = "";
