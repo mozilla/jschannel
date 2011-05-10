@@ -512,6 +512,7 @@
 
                     if (regTbl[method]) throw "method '"+method+"' is already bound!";
                     regTbl[method] = cb;
+                    return this;
                 },
                 call: function(m) {
                     if (!m) throw 'missing arguments to call function';
