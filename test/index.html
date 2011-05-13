@@ -5,7 +5,6 @@
 <title> JSChannel Tests </title>
 
 <script type="text/javascript" src="doctestjs/doctest.js"></script>
-<link rel="stylesheet" type="text/css" href="doctestjs/doctest.css">
 <script type="text/javascript" src="json2.js"></script>
 <script type="text/javascript" src="../src/jschannel.js"></script>
 <script>
@@ -31,9 +30,12 @@ if (window.addEventListener)
   window.addEventListener("load", loadChildCodeSnippets, false);
 </script>
 <style type="text/css">
-body {
-    font-family: "Helvetica,Arial,FreeSans";
+@import url('doctestjs/doctest.css');
+
+html, body {
+    font-family: "Helvetica Neue", Helvetica, Arial, FreeSans, sans-serif;
 }
+
 div.child-code-snippet {
   background: #e0e0e0;
   padding: 1em;
@@ -45,18 +47,64 @@ div.child-code-snippet code {
 }
 #container {
   margin: 0 auto;
-  width: 900px;
+  width: 40em;
 }
-h1 { font-size: 3.8em; margin-bottom: 3px; }
-h1 .small { font-size: 0.4em; }
-h1 a { text-decoration: none }
-h2 { font-size: 1.5em;  }
-    h3 { text-align: center; }
-    .description { font-size: 1.2em; margin-bottom: 30px; margin-top: 30px; font-style: italic;}
-    .download { float: right; }
-pre { background: #000;  color: #FFFFFF; padding: 15px;}
-    hr { border: 0; width: 80%; border-bottom: 1px solid #aaa}
-    .footer { text-align:center; padding-top:30px; font-style: italic; }
+h1 {
+  font-size: 3.8em;
+  margin-bottom: 3px;
+}
+h1 .small {
+  font-size: 0.4em;
+}
+h1 a {
+  text-decoration: none;
+}
+h2 { 
+  font-size: 1.5em;
+}
+h3 {
+  text-align: center;
+}
+.description {
+  font-size: 1.2em;
+  margin-bottom: 30px;
+  margin-top: 30px;
+  font-style: italic;
+}
+.download { 
+  float: right;
+}
+pre {
+  color: gray;
+  padding: 15px;
+  white-space: pre-wrap;
+}
+hr {
+  border: 0;
+  width: 80%;
+  border-bottom: 1px solid #aaa;
+}
+.footer {
+  text-align:center;
+  padding-top:30px;
+  font-style: italic;
+}
+
+span.doctest-example-prompt {
+  color: gray;
+}
+
+span.doctest-example-output {
+  color: gray;
+}
+
+span.doctest-example-code-line {
+  color: black;
+}
+
+pre.doctest {
+  border-left: none;
+}
 </style>
 
 </head>
@@ -76,9 +124,9 @@ by Ian Bicking.
 <button onclick="doctest()">run all tests</button>
 <pre id="doctestOutput"></pre>
 
-<h2>Testing Constructor invocation</h2>
+<h2>Testing constructor invocation</h2>
 
-Test passing a bogus first parameter to .build()
+Test passing a bogus first parameter to <code>.build()</code>
 <pre class="doctest">
 $ Channel.build();
 Error: Channel build invoked without a proper object argument
@@ -88,7 +136,7 @@ $ Channel.build({window: document.getElementById("fakeChildId")});
 Error: Channel.build() called without a valid window argument
 </pre>
 
-Now how about the origin parameter:
+Now how about the <tt>origin</tt> parameter:
 <pre class="doctest">
 $ tgtwin = document.getElementById("fakeChildId").contentWindow;
 $ Channel.build({window: tgtwin, origin: "this isn't a valid origin!"});
@@ -103,7 +151,8 @@ $ Channel.build({window: tgtwin, origin: "http://localhost:1234"}).destroy();
 $ Channel.build({window: tgtwin, origin: "http://10.0.1.104:1234"}).destroy();
 </pre>
 
-Scope parameter
+And the <tt>scope</tt> parameter...
+
 <pre class="doctest">
 $ var tgtwin = document.getElementById("fakeChildId").contentWindow;
 $ Channel.build({window: tgtwin,
@@ -148,7 +197,8 @@ chan = Channel.build({
 });
 </script>
 
-first, the .onReady callback
+Ensure that the <tt>.onReady()</tt> callback is fired.
+
 <pre class="doctest">
 $ onReadyCalled;
 true
