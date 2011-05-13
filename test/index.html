@@ -22,12 +22,41 @@ function loadChildCodeSnippets() {
 }
 
 $(window).load(loadChildCodeSnippets);
+
+var intervalID = setInterval(function() {
+  var failed = $('#doctestOutput span.failed');
+  if (failed.text().length) {
+    $('#please-wait').fadeOut(function() {
+      if (failed.text() == '0')
+        $("#all-tests-passed").fadeIn();
+      else 
+        $("#some-tests-failed, #doctestOutput").fadeIn();
+    });
+  }
+}, 50);
 </script>
 <style type="text/css">
 @import url('doctestjs/doctest.css');
 
 html, body {
     font-family: "Helvetica Neue", Helvetica, Arial, FreeSans, sans-serif;
+}
+
+#all-tests-passed, #some-tests-failed {
+  font-weight: bold;
+  display: none;
+}
+
+#all-tests-passed {
+  color: green;
+}
+
+#some-tests-failed {
+  color: red;
+}
+
+#doctestOutput {
+  display: none;
 }
 
 div.parent-code-snippet {
@@ -114,13 +143,15 @@ pre.doctest {
 <h1> JSChannel testing </h1>
 
 <p>
-What follows are a pile of tests for JSChannel.  Simply click the test
-button at the bottom to run them.  This page uses
+This page uses
 the <a href="http://ianb.github.com/doctestjs/">doctestjs</a> library
 by Ian Bicking.
 </p>
 
-<button onclick="doctest()">run all tests</button>
+<p id="please-wait">Verifying the correctness of the code on this page... <img src="ajax-loader.gif"></p>
+
+<div id="all-tests-passed">All the code on this page is correct.</div>
+<div id="some-tests-failed">Some code on this page doesn't work.</div>
 <pre id="doctestOutput"></pre>
 
 <h2>Testing constructor invocation</h2>
@@ -192,24 +223,17 @@ function wait() {
   Spy('out').wait();
 }
 
-var onReadyCalled = false;
-
 // Allocate a single global channel that we'll run all our tests in.
 var chan = Channel.build({
     window: document.getElementById("childId").contentWindow,
     origin: "*",
     scope: "testScope",
-    onReady: function() { onReadyCalled = true; }
+    onReady: function() {
+      doctest();
+    }
 });
 </script>
 </div>
-
-<p>Ensure that the <tt>.onReady()</tt> callback is fired.</p>
-
-<pre class="doctest">
-$ onReadyCalled;
-true
-</pre>
 
 <p>Test basic query/response:</p>
 
