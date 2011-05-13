@@ -7,27 +7,21 @@
 <script type="text/javascript" src="doctestjs/doctest.js"></script>
 <script type="text/javascript" src="json2.js"></script>
 <script type="text/javascript" src="../src/jschannel.js"></script>
+<script type="text/javascript" src="jquery.min.js"></script>
 <script>
 function loadChildCodeSnippets() {
-  var child = document.getElementById("childId");
-  var snippets = document.getElementsByClassName("child-code-snippet");
-  for (var i = 0; i < snippets.length; i++) {
-    var snippet = snippets[i];
-    var script = child.contentDocument.getElementById(snippet.id);
+  var child = $("#childId").get(0);
+  $(".child-code-snippet").each(function() {
+    var script = child.contentDocument.getElementById(this.id);
     if (script) {
-      var code = document.createElement("code");
-      var header = document.createElement("div");
-      header.textContent = "This test depends on the following code, " +
-                           "defined in the child frame.";
-      code.textContent = script.textContent;
-      snippet.appendChild(header);
-      snippet.appendChild(code);
+      $(this).append('<div>This test depends on the following code, ' +
+                     'defined in the child frame.</div>');
+      $(this).append($('<code></code>').text(script.textContent));
     }
-  }
+  });
 }
 
-if (window.addEventListener)
-  window.addEventListener("load", loadChildCodeSnippets, false);
+$(window).load(loadChildCodeSnippets);
 </script>
 <style type="text/css">
 @import url('doctestjs/doctest.css');
