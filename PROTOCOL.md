@@ -62,10 +62,10 @@ should be executed on the receiving end.
 precise contents are method dependant and are documented in a
 subsequent section of this document.
 
-**callbacks**, like **params**, are method dependant.  These are an array of 
-strings which name enumerate "callbacks" that can be invoked *during* the 
-execution of a method.  That is, a recipient of a request may invoke any number
-of callbacs before returning completing the invocation (by returning a result
+**callbacks**, like **params**, are method dependent. These are an array of
+strings which name "callbacks" that can be invoked *during* the
+execution of a method. That is, a recipient of a request may invoke any number
+of callbacks before returning completing the invocation (by returning a result
 or an error).
 
 ### Callback Invocations
@@ -103,11 +103,10 @@ An example callback invocation looks like:
 **id** the integer id from the request to which this callback
 invocation is a response.
 
-**callback** the string identifier of a callback to invoke.  The original request
-to must have included this same string a
+**callback** the string identifier of a callback to invoke.  The original request must have included this same string in its **callbacks** array.
 
 **params** can be any data that is possible to represent in JSON.  The
-precise contents are method dependant and are documented in a
+precise contents are method dependent and are documented in a
 subsequent section of this document.
 
 ### Error Responses
@@ -140,7 +139,7 @@ Responses are sent when the action (or method) specified in a request is complet
 **id** the integer id from the request to which this messge is a response.
 
 **result** can be any data that is possible to represent in JSON.  The
-precise contents are method dependant and are documented in a
+precise contents are method dependent and are documented in a
 subsequent section of this document.
 
 ### Notifications
@@ -158,7 +157,7 @@ events.  Notification messages must conform to the following schema:
 **method** is a required method name, indicating the nature of the notification.
 
 **params** can be any data that is possible to represent in JSON.  The
-precise contents are method dependant and are documented in a
+precise contents are method dependent and are documented in a
 subsequent section of this document.
 
 ## Connection Setup
