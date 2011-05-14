@@ -105,6 +105,14 @@ html, body {
     font-family: "Helvetica Neue", Helvetica, Arial, FreeSans, sans-serif;
 }
 
+a {
+  color: inherit;
+}
+
+a:hover {
+  background: yellow;
+}
+
 #all-tests-passed, #some-tests-failed {
   font-weight: bold;
   display: none;
@@ -140,24 +148,20 @@ div.child-code-snippet code {
 
 h1 {
   font-size: 24pt;
-  margin-bottom: 3px;
-}
-
-h1 a {
-  text-decoration: none;
 }
 
 h2 { 
   font-size: 18pt;
 }
 
-h3 {
-  text-align: center;
-}
-
 pre {
   color: gray;
   white-space: pre-wrap;
+}
+
+pre, code {
+  font-family: Monaco, "Lucida Console", monospace;
+  font-size: 9pt;
 }
 
 span.doctest-example-prompt {
