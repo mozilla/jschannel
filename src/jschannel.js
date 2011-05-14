@@ -328,6 +328,19 @@
                 };
             }
 
+            var setTransactionTimeout = function(transId, timeout, method) {
+              return window.setTimeout(function() {
+                if (outTbl[transId]) {
+                  // XXX: what if client code raises an exception here?
+                  var msg = "timeout (" + timeout + "ms) exceeded on method '" + method + "'";
+                  (1,outTbl[transId].error)("timeout_error", msg);
+                  delete outTbl[transId];
+                  delete s_transIds[transId];
+                  error("timeout_error", null);
+                }
+              }, timeout);
+            }
+            
             var onMessage = function(origin, method, m) {
                 // if an observer was specified at allocation time, invoke it
                 if (typeof cfg.gotMessageObserver === 'function') {
@@ -546,6 +559,9 @@
                     // build a 'request' message and send it
                     var msg = { id: s_curTranId, method: scopeMethod(m.method), params: m.params };
                     if (callbackNames.length) msg.callbacks = callbackNames;
+
+                    if (m.timeout)
+                      setTransactionTimeout(s_curTranId, m.timeout, scopeMethod(m.method));
 
                     // insert into the transaction table
                     outTbl[s_curTranId] = { callbacks: callbacks, error: m.error, success: m.success };

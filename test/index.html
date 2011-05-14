@@ -354,6 +354,17 @@ $ chan.call({method: "echo",
 out(false)
 </pre>
 
+<h2>timeout test</h2>
+
+<pre class="doctest">
+$ chan.call({ method: "blop",
+>             timeout: 50,
+>             error: emit,
+>             success: emit });
+> wait();
+out("timeout_error", "timeout (50ms) exceeded on method 'testScope::blop'")
+</pre>
+
 </div>
 </body>
 </html>
