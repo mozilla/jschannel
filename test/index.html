@@ -74,19 +74,20 @@ $(window).load(function() {
   doctest();
 
   whenDoctestsFinish(function(numFailed) {
-    $('span.doctest-example-code-line').each(function() {
-      if ($(this).text() == 'wait();') {
-        var prompt = $(this).prev('.doctest-example-prompt').get(0);
-        var newline = prompt.previousSibling;
+    if (numFailed == 0)
+      $('span.doctest-example-code-line').each(function() {
+        if ($(this).text() == 'wait();') {
+          var prompt = $(this).prev('.doctest-example-prompt').get(0);
+          var newline = prompt.previousSibling;
 
-        // Not sure why $(newline).remove() doesn't work, so...
-        newline.parentNode.removeChild(newline);
+          // Not sure why $(newline).remove() doesn't work, so...
+          newline.parentNode.removeChild(newline);
 
-        $(this).parent().append('<div class="time-passes"><span>' +
-                                'Time passes\u2026</span></div>');
-        $(this).add(prompt).remove();
-      }
-    });
+          $(this).parent().append('<div class="time-passes"><span>' +
+                                  'Time passes\u2026</span></div>');
+          $(this).add(prompt).remove();
+        }
+      });
     
     $('#please-wait').fadeOut(function() {
       if (numFailed == 0)
