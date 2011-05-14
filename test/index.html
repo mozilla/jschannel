@@ -2,7 +2,7 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
 
-<title> JSChannel Tests </title>
+<title>JSChannel Documentation</title>
 
 <script type="text/javascript" src="doctestjs/doctest.js"></script>
 <script type="text/javascript" src="json2.js"></script>
@@ -33,6 +33,23 @@ var intervalID = setInterval(function() {
     });
   }
 }, 50);
+
+// A simple function to print out any arguments passed to it.
+function emit() {
+    var f = 'Spy("out").func(';
+    for (var i = 0; i < arguments.length; i++) {
+        f += "arguments["+i+"]";
+        if (i < arguments.length -1) f += ",";
+    }
+    f += ");";
+    eval(f);
+}
+
+function wait() {
+  Spy('out').wait();
+}
+
+$(window).load(function() { doctest(); });
 </script>
 <style type="text/css">
 @import url('doctestjs/doctest.css');
@@ -62,54 +79,39 @@ div.child-code-snippet {
   background: #e0e0e0;
   padding: 1em;
 }
+
 div.child-code-snippet code {
   display: block;
   font-family: monospace;
   white-space: pre-wrap;
 }
+
 #container {
   margin: 0 auto;
   width: 40em;
 }
+
 h1 {
-  font-size: 3.8em;
+  font-size: 24pt;
   margin-bottom: 3px;
 }
-h1 .small {
-  font-size: 0.4em;
-}
+
 h1 a {
   text-decoration: none;
 }
+
 h2 { 
-  font-size: 1.5em;
+  font-size: 18pt;
 }
+
 h3 {
   text-align: center;
 }
-.description {
-  font-size: 1.2em;
-  margin-bottom: 30px;
-  margin-top: 30px;
-  font-style: italic;
-}
-.download { 
-  float: right;
-}
+
 pre {
   color: gray;
   padding: 15px;
   white-space: pre-wrap;
-}
-hr {
-  border: 0;
-  width: 80%;
-  border-bottom: 1px solid #aaa;
-}
-.footer {
-  text-align:center;
-  padding-top:30px;
-  font-style: italic;
 }
 
 span.doctest-example-prompt {
@@ -134,110 +136,42 @@ pre.doctest {
 <iframe style="display: none;" id="childId" src="index_child.html"></iframe>
 <iframe style="display: none;" id="fakeChildId"></iframe>
 <div id="container">
-<h1> JSChannel testing </h1>
-
-<p>
-This page uses
-the <a href="http://ianb.github.com/doctestjs/">doctestjs</a> library
-by Ian Bicking.
-</p>
+<h1>JSChannel Documentation</h1>
 
 <p id="please-wait">Verifying the correctness of the code on this page... <img src="ajax-loader.gif"></p>
 
-<div id="all-tests-passed">All the code on this page is correct.</div>
-<div id="some-tests-failed">Some code on this page doesn't work.</div>
+<p id="all-tests-passed">All the code on this page is correct.</p>
+<p id="some-tests-failed">Some code on this page doesn't work.</p>
 <pre id="doctestOutput"></pre>
 
-<h2>Constructor Invocation</h2>
+<h2>About The Code Examples</h2>
 
-If you pass a bogus first parameter to <code>Channel.build()</code>, a friendly exception is thrown.
+<p>This page uses
+the <a href="http://ianb.github.com/doctestjs/">doctestjs</a> library
+by Ian Bicking. The code examples are actually run on your browser to verify their correctness.</p>
 
-<pre class="doctest">
-$ Channel.build();
-Error: Channel build invoked without a proper object argument
-$ Channel.build({});
-Error: Channel.build() called without a valid window argument
-$ Channel.build({window: document.getElementById("fakeChildId")});
-Error: Channel.build() called without a valid window argument
-</pre>
+<p>All the code examples in this documentation assume communication between a parent page and a child iframe. Example code executed in the child iframe looks like this:</p>
 
-The <tt>origin</tt> parameter can take many different forms:
+<div class="child-code-snippet" id="sample-child-code"></div>
 
-<pre class="doctest">
-$ tgtwin = document.getElementById("fakeChildId").contentWindow;
-$ Channel.build({window: tgtwin, origin: "http://trickyco.de"}).destroy();
-$ Channel.build({window: tgtwin,
->                origin: "http://trickyco.de:8080"}).destroy();
-$ Channel.build({window: tgtwin,
->                origin: "http://trickyco.de:8080/"}).destroy();
-$ Channel.build({window: tgtwin, origin: "http://localhost"}).destroy();
-$ Channel.build({window: tgtwin, origin: "http://localhost:1234"}).destroy();
-$ Channel.build({window: tgtwin, origin: "http://10.0.1.104:1234"}).destroy();
-</pre>
+<p>The examples also assume that a few global functions exist in the parent page:</p>
 
-...except for obvious exceptions.
-
-<pre class="doctest">
-$ Channel.build({window: tgtwin, origin: "this isn't a valid origin!"});
-Error: Channel.build() called with an invalid origin
-</pre>
-
-And the <tt>scope</tt> parameter can include almost any characters...
-
-<pre class="doctest">
-$ var tgtwin = document.getElementById("fakeChildId").contentWindow;
-$ Channel.build({window: tgtwin,
->                origin: "http://trickyco.de",
->                scope: "goodScope"}).destroy();
-$ Channel.build({window: tgtwin,
->                origin: "http://trickyco.de",
->                scope: "speshulScope!@#%^@**(#(%*<>';][,.';'"}).destroy();
-$ Channel.build({window: tgtwin,
->                origin: "http://trickyco.de",
->                scope: "closeTo:BadScope"}).destroy();
-$ Channel.build({window: tgtwin,
->                origin: "http://trickyco.de",
->                scope: "closer:T:o:B:a:dScope"}).destroy();
-</pre>
-
-Except for double colons.
-
-<pre class="doctest">
-$ Channel.build({window: tgtwin,
->                origin: "http://trickyco.de",
->                scope: "veryBad::Scope"});
-Error: scope may not contain double colons: '::'
-</pre>
-
-<h2>Method Invocation</h2>
-
-<p>Assume we have a global function called <code>emit()</code> that simply prints out its arguments, like so:</p>
+<ul>
+  <li><code>emit()</code> simply prints out its arguments, like so:
 
 <pre class="doctest">
 $ emit("hi", "there");
 out("hi", "there")
-</pre>
+</pre></li>
+</ul>
 
-<script>
-// A simple function to print out any arguments passed to it.
-function emit() {
-    var f = 'Spy("out").func(';
-    for (var i = 0; i < arguments.length; i++) {
-        f += "arguments["+i+"]";
-        if (i < arguments.length -1) f += ",";
-    }
-    f += ");";
-    eval(f);
-}
+<h2>Method Invocation</h2>
 
-function wait() {
-  Spy('out').wait();
-}
+<p>Let's create a channel in our child frame:</p>
 
-$(window).load(function() { doctest(); });
-</script>
+<div class="child-code-snippet" id="build-channel"></div>
 
-<p>First, let's create a channel:</p>
+<p>And now we'll build one in our parent page to communicate with it:</p>
 
 <pre class="doctest">
 $ var chan = Channel.build({
@@ -251,6 +185,8 @@ $ var chan = Channel.build({
 > wait();
 out("channel is ready!")
 </pre>
+
+<p>Note that the <code>onReady</code> callback is called once actual communication has been established between the parent page and child frame. If the child frame hadn't set up its end of the channel, for instance, <code>onReady</code> would never get called.</p>
 
 <p>Now we'll define a simple function in our child frame:</p>
 
@@ -354,7 +290,9 @@ $ chan.call({method: "getStuff",
 out("mega_fail", "i could not get your stuff.")
 </pre>
 
-<h2>callbacks</h2>
+<h2>Callbacks</h2>
+
+<p>Clients can pass functions as parameters to remote methods, and they can be called by the implementer.</p>
 
 <div class="child-code-snippet" id="callbacks"></div>
 
@@ -388,9 +326,13 @@ out("STOP CALLING ME!")
 out("complete")
 </pre>
 
-<h2>echo test</h2>
+<h2>Return Types</h2>
+
+<p>Assuming a trivial echo function like this:</p>
 
 <div class="child-code-snippet" id="echo"></div>
+
+<p>It's possible for a remote method to return any native JavaScript types, like numbers:</p>
 
 <pre class="doctest">
 $ chan.call({method: "echo",
@@ -399,12 +341,22 @@ $ chan.call({method: "echo",
 >            error: emit});
 > wait();
 out(0)
+</pre>
+
+<p><code>null</code> works, too:</p>
+
+<pre class="doctest">
 $ chan.call({method: "echo",
 >            params: null,
 >            success: emit,
 >            error: emit});
 > wait();
 out(null)
+</pre>
+
+<p>As do booleans:</p>
+
+<pre class="doctest">
 $ chan.call({method: "echo",
 >            params: false,
 >            success: emit,
@@ -413,9 +365,11 @@ $ chan.call({method: "echo",
 out(false)
 </pre>
 
-<h2>timeout test</h2>
+<h2>Timeouts</h2>
 
-<p>Here's a trivial use of the <code>timeout</code> option.</p>
+<p>Clients can also be notified if a remote method invocation takes too long to complete by passing a <code>timeout</code> parameter to a channel's <code>call()</code> method.</p>
+
+<p>For instance, we can try calling a nonexistent method with a timeout:</p>
 
 <pre class="doctest">
 $ chan.call({ method: "nonexistent",
@@ -440,6 +394,66 @@ $ var x = [];
 out("echo called")
 </pre>
 
+<h2>Constructor Invocation</h2>
+
+If you pass a bogus first parameter to <code>Channel.build()</code>, a friendly exception is thrown.
+
+<pre class="doctest">
+$ Channel.build();
+Error: Channel build invoked without a proper object argument
+$ Channel.build({});
+Error: Channel.build() called without a valid window argument
+$ Channel.build({window: document.getElementById("fakeChildId")});
+Error: Channel.build() called without a valid window argument
+</pre>
+
+The <tt>origin</tt> parameter can take many different forms:
+
+<pre class="doctest">
+$ tgtwin = document.getElementById("fakeChildId").contentWindow;
+$ Channel.build({window: tgtwin, origin: "http://trickyco.de"}).destroy();
+$ Channel.build({window: tgtwin,
+>                origin: "http://trickyco.de:8080"}).destroy();
+$ Channel.build({window: tgtwin,
+>                origin: "http://trickyco.de:8080/"}).destroy();
+$ Channel.build({window: tgtwin, origin: "http://localhost"}).destroy();
+$ Channel.build({window: tgtwin, origin: "http://localhost:1234"}).destroy();
+$ Channel.build({window: tgtwin, origin: "http://10.0.1.104:1234"}).destroy();
+</pre>
+
+...except for obvious exceptions.
+
+<pre class="doctest">
+$ Channel.build({window: tgtwin, origin: "this isn't a valid origin!"});
+Error: Channel.build() called with an invalid origin
+</pre>
+
+And the <tt>scope</tt> parameter can include almost any characters...
+
+<pre class="doctest">
+$ var tgtwin = document.getElementById("fakeChildId").contentWindow;
+$ Channel.build({window: tgtwin,
+>                origin: "http://trickyco.de",
+>                scope: "goodScope"}).destroy();
+$ Channel.build({window: tgtwin,
+>                origin: "http://trickyco.de",
+>                scope: "speshulScope!@#%^@**(#(%*<>';][,.';'"}).destroy();
+$ Channel.build({window: tgtwin,
+>                origin: "http://trickyco.de",
+>                scope: "closeTo:BadScope"}).destroy();
+$ Channel.build({window: tgtwin,
+>                origin: "http://trickyco.de",
+>                scope: "closer:T:o:B:a:dScope"}).destroy();
+</pre>
+
+Except for double colons.
+
+<pre class="doctest">
+$ Channel.build({window: tgtwin,
+>                origin: "http://trickyco.de",
+>                scope: "veryBad::Scope"});
+Error: scope may not contain double colons: '::'
+</pre>
 
 </div>
 </body>
