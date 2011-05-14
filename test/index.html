@@ -356,14 +356,31 @@ out(false)
 
 <h2>timeout test</h2>
 
+<p>Here's a trivial use of the <code>timeout</code> option.</p>
+
 <pre class="doctest">
-$ chan.call({ method: "blop",
+$ chan.call({ method: "nonexistent",
 >             timeout: 50,
 >             error: emit,
 >             success: emit });
 > wait();
-out("timeout_error", "timeout (50ms) exceeded on method 'testScope::blop'")
+out("timeout_error", "timeout (50ms) exceeded on method 'testScope::nonexistent'")
 </pre>
+
+<p>Of course, the timeout doesn't get triggered if the method call actually completes...</p>
+
+<pre class="doctest">
+$ var x = [];
+> chan.call({ method: "echo",
+>             params: "echo called",
+>             timeout: 100,
+>             error: function(e, m) { x.push(e); },
+>             success: function(m) { x.push(m); }});
+> setTimeout(function() { emit.apply(null, x); }, 250);
+> wait();
+out("echo called")
+</pre>
+
 
 </div>
 </body>

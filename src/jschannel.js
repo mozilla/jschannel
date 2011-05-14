@@ -336,7 +336,6 @@
                   (1,outTbl[transId].error)("timeout_error", msg);
                   delete outTbl[transId];
                   delete s_transIds[transId];
-                  error("timeout_error", null);
                 }
               }, timeout);
             }
@@ -561,6 +560,9 @@
                     if (callbackNames.length) msg.callbacks = callbackNames;
 
                     if (m.timeout)
+                      // XXX: This function returns a timeout ID, but we don't do anything with it.
+                      // We might want to keep track of it so we can cancel it using clearTimeout()
+                      // when the transaction completes.
                       setTransactionTimeout(s_curTranId, m.timeout, scopeMethod(m.method));
 
                     // insert into the transaction table
