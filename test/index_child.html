@@ -6,6 +6,16 @@
      all sorts stuff, including the inputs and outputs to our functions --> 
 <script src="json2.js"></script>
 <script src="../src/jschannel.js"></script>
+
+<style>
+script {
+  display: block;
+  white-space: pre-wrap;
+  font-family: monospace;
+}
+</style>
+</head>
+<body>
 <script>
 
 var chan = Channel.build({window: window.parent, origin: "*", scope: "testScope"});
@@ -17,17 +27,48 @@ chan.bind("reverse", function(trans, s) {
 });
 </script>
 
-<script id="error-responses">
-chan.bind("error", function(trans, s) {
-    if (s === "throw_array") throw [ "array_error_code", 'array error message'];
-    else if (s === "throw_object") throw { error: "object_error_code", message: 'object error message' };
-    else if (s === "throw_string") throw "this is a string";
-    else if (s === "accidental_throw") window.dne();
-    else if (s === "smush_object") throw {dont:"smush",me:"no!!"};
-    else if (s === "tostring_craziness") throw window;
+<script id="throw-array">
+chan.bind("throwArray", function(trans, s) {
+    throw [ "array_error_code", 'array error message'];
+});
+</script>
 
-    // otherwise, invoke the error call on the transaction object
-    trans.error("parameter_required", "you're missing the 'type of error to emit' parameter, doofus");
+<script id="throw-object">
+chan.bind("throwObject", function(trans, s) {
+    throw { error: "object_error_code", message: 'object error message' };
+});
+</script>
+
+<script id="throw-string">
+chan.bind("throwString", function(trans, s) {
+    throw "this is a string";
+});
+</script>
+
+<script id="accidental-throw">
+chan.bind("accidentalThrow", function(trans, s) {
+    window.nonExistentMethod();
+});
+</script>
+
+<script id="throw-smushed-object">
+chan.bind("throwSmushedObject", function(trans, s) {
+    throw {dont:"smush",me:"no!!"};
+});
+</script>
+
+<script id="throw-tostringed-object">
+chan.bind("throwToStringedObject", function(trans, s) {
+    throw window;
+});
+</script>
+
+<script id="get-stuff">
+chan.bind("getStuff", function(trans) {
+    setTimeout(function() {
+        trans.error("mega_fail", "i could not get your stuff.");
+    }, 50);
+    trans.delayReturn(true);
 });
 </script>
 
@@ -49,5 +90,5 @@ chan.bind("caller_backer", function(trans, a) {
 <script id="echo">
 chan.bind("echo", function(trans, a) { return a });
 </script>
-</head>
+</body>
 </html>

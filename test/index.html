@@ -14,9 +14,8 @@ function loadChildCodeSnippets() {
   $(".child-code-snippet").each(function() {
     var script = child.contentDocument.getElementById(this.id);
     if (script) {
-      $(this).append('<div>This test depends on the following code, ' +
-                     'defined in the child frame.</div>');
-      $(this).append($('<code></code>').text(script.textContent));
+      var code = jQuery.trim(script.textContent);
+      $(this).append($('<code></code>').text(code));
     }
   });
 }
@@ -59,16 +58,11 @@ html, body {
   display: none;
 }
 
-div.parent-code-snippet {
-  border: 1px dotted gray;
-  padding: 1em;
-}
-
 div.child-code-snippet {
   background: #e0e0e0;
   padding: 1em;
 }
-div.parent-code-snippet script, div.child-code-snippet code {
+div.child-code-snippet code {
   display: block;
   font-family: monospace;
   white-space: pre-wrap;
@@ -154,9 +148,10 @@ by Ian Bicking.
 <div id="some-tests-failed">Some code on this page doesn't work.</div>
 <pre id="doctestOutput"></pre>
 
-<h2>Testing constructor invocation</h2>
+<h2>Constructor Invocation</h2>
 
-Test passing a bogus first parameter to <code>.build()</code>
+If you pass a bogus first parameter to <code>Channel.build()</code>, a friendly exception is thrown.
+
 <pre class="doctest">
 $ Channel.build();
 Error: Channel build invoked without a proper object argument
@@ -166,11 +161,10 @@ $ Channel.build({window: document.getElementById("fakeChildId")});
 Error: Channel.build() called without a valid window argument
 </pre>
 
-Now how about the <tt>origin</tt> parameter:
+The <tt>origin</tt> parameter can take many different forms:
+
 <pre class="doctest">
 $ tgtwin = document.getElementById("fakeChildId").contentWindow;
-$ Channel.build({window: tgtwin, origin: "this isn't a valid origin!"});
-Error: Channel.build() called with an invalid origin
 $ Channel.build({window: tgtwin, origin: "http://trickyco.de"}).destroy();
 $ Channel.build({window: tgtwin,
 >                origin: "http://trickyco.de:8080"}).destroy();
@@ -181,7 +175,14 @@ $ Channel.build({window: tgtwin, origin: "http://localhost:1234"}).destroy();
 $ Channel.build({window: tgtwin, origin: "http://10.0.1.104:1234"}).destroy();
 </pre>
 
-And the <tt>scope</tt> parameter...
+...except for obvious exceptions.
+
+<pre class="doctest">
+$ Channel.build({window: tgtwin, origin: "this isn't a valid origin!"});
+Error: Channel.build() called with an invalid origin
+</pre>
+
+And the <tt>scope</tt> parameter can include almost any characters...
 
 <pre class="doctest">
 $ var tgtwin = document.getElementById("fakeChildId").contentWindow;
@@ -197,16 +198,26 @@ $ Channel.build({window: tgtwin,
 $ Channel.build({window: tgtwin,
 >                origin: "http://trickyco.de",
 >                scope: "closer:T:o:B:a:dScope"}).destroy();
+</pre>
+
+Except for double colons.
+
+<pre class="doctest">
 $ Channel.build({window: tgtwin,
 >                origin: "http://trickyco.de",
 >                scope: "veryBad::Scope"});
 Error: scope may not contain double colons: '::'
 </pre>
 
-<h2>query/response</h2>
+<h2>Method Invocation</h2>
 
-<div class="parent-code-snippet">
-<div>Following tests depend on this code, defined in the parent frame.</div>
+<p>Assume we have a global function called <code>emit()</code> that simply prints out its arguments, like so:</p>
+
+<pre class="doctest">
+$ emit("hi", "there");
+out("hi", "there")
+</pre>
+
 <script>
 // A simple function to print out any arguments passed to it.
 function emit() {
@@ -223,21 +234,29 @@ function wait() {
   Spy('out').wait();
 }
 
-// Allocate a single global channel that we'll run all our tests in.
-var chan = Channel.build({
-    window: document.getElementById("childId").contentWindow,
-    origin: "*",
-    scope: "testScope",
-    onReady: function() {
-      doctest();
-    }
-});
+$(window).load(function() { doctest(); });
 </script>
-</div>
 
-<p>Test basic query/response:</p>
+<p>First, let's create a channel:</p>
+
+<pre class="doctest">
+$ var chan = Channel.build({
+>   window: document.getElementById("childId").contentWindow,
+>   origin: "*",
+>   scope: "testScope",
+>   onReady: function() {
+>     emit("channel is ready!");
+>   }
+> });
+> wait();
+out("channel is ready!")
+</pre>
+
+<p>Now we'll define a simple function in our child frame:</p>
 
 <div class="child-code-snippet" id="basic-query-response"></div>
+
+<p>And call it in our parent frame.</p>
 
 <pre class="doctest">
 $ chan.call({ method: "reverse",
@@ -247,52 +266,92 @@ $ chan.call({ method: "reverse",
 out("!dlrow olleh")
 </pre>
 
-<p>Test all flavors of error responses</p>
+<p>Remote methods can throw errors, too. Here's one in our child frame:</p>
 
-<div class="child-code-snippet" id="error-responses"></div>
+<div class="child-code-snippet" id="throw-object"></div>
+
+<p>Calling that produces this:</p>
 
 <pre class="doctest">
-$ chan.call({method: "error",
->            error: emit,
->            success: emit});
-> wait();
-out("parameter_required", "you're missing the 'type of error to emit' parameter, doofus")
-$ chan.call({method: "error",
->            params: "throw_array",
->            error: emit,
->            success: emit});
-> wait();
-out("array_error_code", "array error message")
-$ chan.call({method: "error",
->            params: "throw_object",
+$ chan.call({method: "throwObject",
 >            error: emit,
 >            success: emit});
 > wait();
 out("object_error_code", "object error message")
-$ chan.call({method: "error",
->            params: "throw_string",
+</pre>
+
+<p>But objects with keys other than <code>error</code> and <code>message</code>...</p>
+
+<div class="child-code-snippet" id="throw-smushed-object"></div>
+
+<p>...get smushed into strings by attempting to serialize them to JSON.</p>
+
+<pre class="doctest">
+$ chan.call({method: "throwSmushedObject",
+>            error: emit,
+>            success: emit});
+> wait();
+out("runtime_error", "{\"dont\":\"smush\",\"me\":\"no!!\"...}")
+</pre>
+
+<p>But objects that can't be serialized to JSON just get coerced to strings:</p>
+
+<div class="child-code-snippet" id="throw-tostringed-object"></div>
+
+<pre class="doctest">
+$ chan.call({method: "throwToStringedObject",
+>            error: emit,
+>            success: emit});
+> wait();
+out("runtime_error", "[object ...]")
+</pre>
+
+<p>You can throw arrays, too:</p>
+
+<div class="child-code-snippet" id="throw-array"></div>
+
+<pre class="doctest">
+$ chan.call({method: "throwArray",
+>            error: emit,
+>            success: emit});
+> wait();
+out("array_error_code", "array error message")
+</pre>
+
+<p>And strings...</p>
+
+<div class="child-code-snippet" id="throw-string"></div>
+
+<pre class="doctest">
+$ chan.call({method: "throwString",
 >            error: emit,
 >            success: emit});
 > wait();
 out("runtime_error", "this is a string")
-$ chan.call({method: "error",
->            params: "accidental_throw",
->            error: emit, 
+</pre>
+
+<p>Totally unintentional exceptions get propagated, too:</p>
+
+<div class="child-code-snippet" id="accidental-throw"></div>
+
+<pre class="doctest">
+$ chan.call({method: "accidentalThrow",
+>            error: emit,
 >            success: emit});
 > wait(); // exception content varies by browser
 out("runtime_error", ...)
-$ chan.call({method: "error",
->            params: "smush_object",
+</pre>
+
+<p>If your method's implementation is asychronous, you can use a transaction's <code>error()</code> method to propagate errors, too.</p>
+
+<div class="child-code-snippet" id="get-stuff"></div>
+
+<pre class="doctest">
+$ chan.call({method: "getStuff",
 >            error: emit,
 >            success: emit});
-> wait(); // thrown objects get smushed.
-out("runtime_error", "{\"dont\":\"smush\",\"me\":\"no!!\"...}")
-$ chan.call({method: "error",
->            params: "tostring_craziness",
->            error: emit,
->            success: emit});
-> wait(); // if JSON.stringify pukes, toString()
-out("runtime_error", "[object ...]")
+> wait();
+out("mega_fail", "i could not get your stuff.")
 </pre>
 
 <h2>callbacks</h2>
