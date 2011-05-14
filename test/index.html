@@ -9,31 +9,6 @@
 <script type="text/javascript" src="../src/jschannel.js"></script>
 <script type="text/javascript" src="jquery.min.js"></script>
 <script>
-function loadChildCodeSnippets() {
-  var child = $("#childId").get(0);
-  $(".child-code-snippet").each(function() {
-    var script = child.contentDocument.getElementById(this.id);
-    if (script) {
-      var code = jQuery.trim(script.textContent);
-      $(this).append($('<code></code>').text(code));
-    }
-  });
-}
-
-$(window).load(loadChildCodeSnippets);
-
-var intervalID = setInterval(function() {
-  var failed = $('#doctestOutput span.failed');
-  if (failed.text().length) {
-    $('#please-wait').fadeOut(function() {
-      if (failed.text() == '0')
-        $("#all-tests-passed").fadeIn();
-      else 
-        $("#some-tests-failed, #doctestOutput").fadeIn();
-    });
-  }
-}, 50);
-
 // A simple function to print out any arguments passed to it.
 function emit() {
     var f = 'Spy("out").func(';
@@ -49,7 +24,78 @@ function wait() {
   Spy('out').wait();
 }
 
-$(window).load(function() { doctest(); });
+$(window).ready(function() {
+  function trimDoctests() {
+    $("pre.doctest").each(function() {
+      $(this).text(jQuery.trim($(this).text()));
+    });
+  }
+  
+  trimDoctests();
+});
+
+$(window).load(function() {
+  function loadChildCodeSnippets() {
+    var childDoc = $("#childId").get(0).contentDocument;
+    $(".child-code-snippet").each(function() {
+      if (childDoc) {
+        var script = childDoc.getElementById(this.id);
+        if (script) {
+          var code = jQuery.trim(script.textContent);
+          $(this).append($('<code></code>').text(code));
+        }
+      } else {
+        // XXX: We can potentially get around this by
+        // defining the child code snippets in the parent
+        // and evaluating them in the child via a
+        // jschannel. How meta!
+        $(this).html('<strong>You need to load this page from a ' +
+                     'real web server. Sorry, but your browser\'s ' +
+                     'default security policy for file URLs is ' +
+                     'dumb.</strong>');
+      }
+    });
+  }
+
+  function whenDoctestsFinish(cb) {
+    // It doesn't seem like doctest.js can notify clients when
+    // the tests are finished running, so we'll have to
+    // poll for now.
+    var intervalID = setInterval(function() {
+      var failed = $('#doctestOutput span.failed');
+      if (failed.text().length) {
+        clearInterval(intervalID);
+        cb(parseInt(failed.text()));
+      }
+    }, 50);
+  }
+
+  loadChildCodeSnippets();
+  doctest();
+
+  whenDoctestsFinish(function(numFailed) {
+    $('span.doctest-example-code-line').each(function() {
+      if ($(this).text() == 'wait();') {
+        var prompt = $(this).prev('.doctest-example-prompt').get(0);
+        var newline = prompt.previousSibling;
+
+        // Not sure why $(newline).remove() doesn't work, so...
+        newline.parentNode.removeChild(newline);
+
+        $(this).parent().append('<div class="time-passes"><span>' +
+                                'Time passes\u2026</span></div>');
+        $(this).add(prompt).remove();
+      }
+    });
+    
+    $('#please-wait').fadeOut(function() {
+      if (numFailed == 0)
+        $("#all-tests-passed").fadeIn();
+      else 
+        $("#some-tests-failed, #doctestOutput").fadeIn();
+    });
+  });
+});
 </script>
 <style type="text/css">
 @import url('doctestjs/doctest.css');
@@ -110,7 +156,6 @@ h3 {
 
 pre {
   color: gray;
-  padding: 15px;
   white-space: pre-wrap;
 }
 
@@ -124,6 +169,20 @@ span.doctest-example-output {
 
 span.doctest-example-code-line {
   color: black;
+}
+
+div.time-passes {
+  font-size: 8pt;
+  font-family: "Helvetica Neue", Helvetica, Arial, FreeSans, sans-serif;
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+div.time-passes span {
+  border: 1px dotted gray;
+  background: #f0f0f0;
+  color: black;
+  padding: 2px;  
 }
 
 pre.doctest {
@@ -274,7 +333,8 @@ out("runtime_error", "this is a string")
 $ chan.call({method: "accidentalThrow",
 >            error: emit,
 >            success: emit});
-> wait(); // exception content varies by browser
+> // Note that the exception content varies by browser.
+> wait();
 out("runtime_error", ...)
 </pre>
 
