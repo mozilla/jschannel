@@ -237,8 +237,10 @@ out("hi", "there")
 
 <p>And now we'll build one in our parent page to communicate with it:</p>
 
+<!-- We want to use chan in other doctests, and in order to keep the
+     variable around on MSIE8, we need to force it to be a global. -->
 <pre class="doctest">
-$ var chan = Channel.build({
+$ chan = Channel.build({
 >   window: document.getElementById("childId").contentWindow,
 >   origin: "*",
 >   scope: "testScope",
@@ -303,7 +305,7 @@ $ chan.call({method: "throwToStringedObject",
 >            error: emit,
 >            success: emit});
 > wait();
-out("runtime_error", "[object ...]")
+out("runtime_error", "[object...]")
 </pre>
 
 <p>You can throw arrays, too:</p>
