@@ -16,6 +16,17 @@ script {
 </style>
 </head>
 <body>
+<script>
+var harnessChan = Channel.build({window: window.parent,
+                                 origin: "*",
+                                 scope: "harness"});
+
+harnessChan.bind("getScript", function(trans, id) {
+  var script = document.getElementById(id);
+  return script.text || script.textContent;
+});
+</script>
+
 <script id="sample-child-code">
 /* Here's a comment in the child iframe. */
 </script>

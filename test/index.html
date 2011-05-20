@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
@@ -25,6 +26,9 @@ function wait() {
 }
 
 function snippet() {
+  /* This is intentionally empty; we pass functions containing
+   * doctests in here so that they're not executed on page
+   * load. */
 }
 
 jQuery.fn.extend({
@@ -64,25 +68,24 @@ $(window).ready(function() {
 
 $(window).load(function() {
   function loadChildCodeSnippets() {
-    var childDoc = $("#childId").get(0).contentDocument;
-    $(".child-code-snippet").each(function() {
-      if (childDoc) {
-        var script = childDoc.getElementById(this.id);
-        if (script) {
-          var code = jQuery.trim(script.textContent);
-          $(this).append($('<code></code>').text(code));
-        }
-      } else {
-        // XXX: We can potentially get around this by
-        // defining the child code snippets in the parent
-        // and evaluating them in the child via a
-        // jschannel. How meta!
-        $(this).html('<strong>You need to load this page from a ' +
-                     'real web server. Sorry, but your browser\'s ' +
-                     'default security policy for file URLs is ' +
-                     'dumb.</strong>');
+    var harnessChan = Channel.build({
+      window: $("#childId").get(0).contentWindow,
+      origin: "*",
+      scope: "harness",
+      onReady: function() {
+        $(".child-code-snippet").each(function() {
+          var element = this;
+          harnessChan.call({
+            method: "getScript",
+            params: this.id,
+            success: function(code) {
+              code = jQuery.trim(code);
+              $(element).append($('<code></code>').text(code));
+            }
+          });
+        });
       }
-    });
+    });    
   }
 
   function whenDoctestsFinish(cb) {
