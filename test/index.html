@@ -419,35 +419,37 @@ snippet(function() {
 
 <div class="child-code-snippet" id="callbacks"></div>
 
-<pre class="doctest">
-$ chan.call({method: "caller_backer",
->            params: { cb: emit },
->            success: emit});
-> wait();
-out("you called?")
-out("complete")
-$ chan.call({method: "caller_backer",
->            params: { cb2: emit },
->            success: emit});
-> wait();
-out("you called again!?")
-out("complete")
-$ chan.call({method: "caller_backer",
->            params: { nested: { cb: emit } },
->            success: emit});
-> wait();
-out("STOP CALLING ME!")
-out("complete")
-$ chan.call({method: "caller_backer",
->            params: { cb: emit, cb2: emit, nested: { cb: emit } }, 
->            error: emit,
->            success: emit});
-> wait();
-out("you called?")
-out("you called again!?")
-out("STOP CALLING ME!")
-out("complete")
-</pre>
+<script class="doctest">
+snippet(function() {
+  chan.call({method: "caller_backer",
+             params: { cb: emit },
+             success: emit});
+  wait();
+  // expect: out("you called?")
+  // expect: out("complete")
+  chan.call({method: "caller_backer",
+             params: { cb2: emit },
+             success: emit});
+  wait();
+  // expect: out("you called again!?")
+  // expect: out("complete")
+  chan.call({method: "caller_backer",
+             params: { nested: { cb: emit } },
+             success: emit});
+  wait();
+  // expect: out("STOP CALLING ME!")
+  // expect: out("complete")
+  chan.call({method: "caller_backer",
+             params: { cb: emit, cb2: emit, nested: { cb: emit } }, 
+             error: emit,
+             success: emit});
+  wait();
+  // expect: out("you called?")
+  // expect: out("you called again!?")
+  // expect: out("STOP CALLING ME!")
+  // expect: out("complete")
+});
+</script>
 
 <h2>Return Types</h2>
 
@@ -531,62 +533,72 @@ snippet(function() {
 
 If you pass a bogus first parameter to <code>Channel.build()</code>, a friendly exception is thrown.
 
-<pre class="doctest">
-$ Channel.build();
-Error: Channel build invoked without a proper object argument
-$ Channel.build({});
-Error: Channel.build() called without a valid window argument
-$ Channel.build({window: document.getElementById("fakeChildId")});
-Error: Channel.build() called without a valid window argument
-</pre>
+<script class="doctest">
+snippet(function() {
+  Channel.build();
+  // expect: Error: Channel build invoked without a proper object argument
+  Channel.build({});
+  // expect: Error: Channel.build() called without a valid window argument
+  Channel.build({window: document.getElementById("fakeChildId")});
+  // expect: Error: Channel.build() called without a valid window argument
+});
+</script>
 
 The <tt>origin</tt> parameter can take many different forms:
 
-<pre class="doctest">
-$ tgtwin = document.getElementById("fakeChildId").contentWindow;
-$ Channel.build({window: tgtwin, origin: "http://trickyco.de"}).destroy();
-$ Channel.build({window: tgtwin,
->                origin: "http://trickyco.de:8080"}).destroy();
-$ Channel.build({window: tgtwin,
->                origin: "http://trickyco.de:8080/"}).destroy();
-$ Channel.build({window: tgtwin, origin: "http://localhost"}).destroy();
-$ Channel.build({window: tgtwin, origin: "http://localhost:1234"}).destroy();
-$ Channel.build({window: tgtwin, origin: "http://10.0.1.104:1234"}).destroy();
-</pre>
+<script class="doctest">
+snippet(function() {
+  tgtwin = document.getElementById("fakeChildId").contentWindow;
+  Channel.build({window: tgtwin, origin: "http://trickyco.de"}).destroy();
+  Channel.build({window: tgtwin,
+                 origin: "http://trickyco.de:8080"}).destroy();
+  Channel.build({window: tgtwin,
+                 origin: "http://trickyco.de:8080/"}).destroy();
+  Channel.build({window: tgtwin, origin: "http://localhost"}).destroy();
+  Channel.build({window: tgtwin, origin: "http://localhost:1234"}).destroy();
+  Channel.build({window: tgtwin, origin: "http://10.0.1.104:1234"}).destroy();
+});
+</script>
 
 ...except for obvious exceptions.
 
-<pre class="doctest">
-$ Channel.build({window: tgtwin, origin: "this isn't a valid origin!"});
-Error: Channel.build() called with an invalid origin
-</pre>
+<script class="doctest">
+snippet(function() {
+  Channel.build({window: tgtwin, origin: "this isn't a valid origin!"});
+  // expect: Error: Channel.build() called with an invalid origin
+});
+</script>
 
 And the <tt>scope</tt> parameter can include almost any characters...
 
-<pre class="doctest">
-$ var tgtwin = document.getElementById("fakeChildId").contentWindow;
-$ Channel.build({window: tgtwin,
->                origin: "http://trickyco.de",
->                scope: "goodScope"}).destroy();
-$ Channel.build({window: tgtwin,
->                origin: "http://trickyco.de",
->                scope: "speshulScope!@#%^@**(#(%*<>';][,.';'"}).destroy();
-$ Channel.build({window: tgtwin,
->                origin: "http://trickyco.de",
->                scope: "closeTo:BadScope"}).destroy();
-$ Channel.build({window: tgtwin,
->                origin: "http://trickyco.de",
->                scope: "closer:T:o:B:a:dScope"}).destroy();
-</pre>
+<script class="doctest">
+snippet(function() {
+  var tgtwin = document.getElementById("fakeChildId").contentWindow;
+  Channel.build({window: tgtwin,
+                 origin: "http://trickyco.de",
+                 scope: "goodScope"}).destroy();
+  Channel.build({window: tgtwin,
+                 origin: "http://trickyco.de",
+                 scope: "speshulScope!@#%^@**(#(%*<>';][,.';'"}).destroy();
+  Channel.build({window: tgtwin,
+                 origin: "http://trickyco.de",
+                 scope: "closeTo:BadScope"}).destroy();
+  Channel.build({window: tgtwin,
+                 origin: "http://trickyco.de",
+                 scope: "closer:T:o:B:a:dScope"}).destroy();
+});
+</script>
 
 Except for double colons.
 
-<pre class="doctest">
-$ Channel.build({window: tgtwin,
->                origin: "http://trickyco.de",
->                scope: "veryBad::Scope"});
-Error: scope may not contain double colons: '::'
-</pre>
+<script class="doctest">
+snippet(function() {
+  Channel.build({window: tgtwin,
+                 origin: "http://trickyco.de",
+                 scope: "veryBad::Scope"});
+  // expect: Error: scope may not contain double colons: '::'
+});
+</script>
 
 </div>
 </body>
