@@ -155,9 +155,11 @@ $(window).load(function() {
       
       $('span.doctest-example-prompt').remove();
       $('span.doctest-example-code').syntaxHighlight('javascript');
-    } else
-      $('.more-link').click();
-    
+    } else {
+      $('#container .more-link').remove();
+      $('.more').show();
+    }
+
     $('#please-wait').fadeOut(function() {
       if (numFailed == 0)
         $("#all-tests-passed").fadeIn();
