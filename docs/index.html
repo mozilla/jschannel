@@ -374,7 +374,7 @@ snippet(function() {
 });
 </script>
 
-The <tt>origin</tt> parameter can take many different forms:
+The <tt>origin</tt> parameter is used for security purposes, just as in <code>window.postMessage()</code>, and it can take many different forms:
 
 <script class="doctest">
 snippet(function() {
@@ -399,7 +399,7 @@ snippet(function() {
 });
 </script>
 
-And the <tt>scope</tt> parameter can include almost any characters...
+And the <tt>scope</tt> parameter can include almost any characters to automatically namespace the channel so it doesn't conflict with other channels:
 
 <script class="doctest">
 snippet(function() {
@@ -419,7 +419,7 @@ snippet(function() {
 });
 </script>
 
-Except for double colons.
+But a channel's scope can't include double colons.
 
 <script class="doctest">
 snippet(function() {
