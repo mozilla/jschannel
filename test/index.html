@@ -79,8 +79,22 @@ $(window).ready(function() {
     });
   }
 
+  function collapseMoreSections() {
+    $('.more').each(function() {
+      var link = $("#templates .more-link").clone();
+      var section = $(this);
+      link.find(".title").text(section.attr("title"));
+      link.children("span").click(function() {
+        section.slideDown();
+        link.remove();
+      });
+      section.before(link).hide();
+    });
+  }
+
   convertSnippetScriptsToDoctests();
   trimDoctests();
+  collapseMoreSections();
 });
 
 $(window).load(function() {
@@ -141,7 +155,8 @@ $(window).load(function() {
       
       $('span.doctest-example-prompt').remove();
       $('span.doctest-example-code').syntaxHighlight('javascript');
-    }
+    } else
+      $('.more-link').click();
     
     $('#please-wait').fadeOut(function() {
       if (numFailed == 0)
@@ -246,6 +261,19 @@ div.time-passes span {
 pre.doctest {
   border-left: none;
 }
+
+.more-link {
+  text-align: right;
+}
+
+.more-link > span {
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.more-link > span:hover {
+  text-decoration: underline;
+}
 </style>
 
 </head>
@@ -311,6 +339,77 @@ snippet(function() {
 
 <p>Note that the <code>onReady</code> callback is called once actual communication has been established between the parent page and child frame. If the child frame hadn't set up its end of the channel, for instance, <code>onReady</code> would never get called.</p>
 
+<div class="more" title="channel creation">
+If you pass a bogus first parameter to <code>Channel.build()</code>, a friendly exception is thrown.
+
+<script class="doctest">
+snippet(function() {
+  Channel.build();
+  // expect: Error: Channel build invoked without a proper object argument
+  Channel.build({});
+  // expect: Error: Channel.build() called without a valid window argument
+  Channel.build({window: document.getElementById("fakeChildId")});
+  // expect: Error: Channel.build() called without a valid window argument
+});
+</script>
+
+The <tt>origin</tt> parameter can take many different forms:
+
+<script class="doctest">
+snippet(function() {
+  tgtwin = document.getElementById("fakeChildId").contentWindow;
+  Channel.build({window: tgtwin, origin: "http://trickyco.de"}).destroy();
+  Channel.build({window: tgtwin,
+                 origin: "http://trickyco.de:8080"}).destroy();
+  Channel.build({window: tgtwin,
+                 origin: "http://trickyco.de:8080/"}).destroy();
+  Channel.build({window: tgtwin, origin: "http://localhost"}).destroy();
+  Channel.build({window: tgtwin, origin: "http://localhost:1234"}).destroy();
+  Channel.build({window: tgtwin, origin: "http://10.0.1.104:1234"}).destroy();
+});
+</script>
+
+...except for obvious exceptions.
+
+<script class="doctest">
+snippet(function() {
+  Channel.build({window: tgtwin, origin: "this isn't a valid origin!"});
+  // expect: Error: Channel.build() called with an invalid origin
+});
+</script>
+
+And the <tt>scope</tt> parameter can include almost any characters...
+
+<script class="doctest">
+snippet(function() {
+  var tgtwin = document.getElementById("fakeChildId").contentWindow;
+  Channel.build({window: tgtwin,
+                 origin: "http://trickyco.de",
+                 scope: "goodScope"}).destroy();
+  Channel.build({window: tgtwin,
+                 origin: "http://trickyco.de",
+                 scope: "speshulScope!@#%^@**(#(%*<>';][,.';'"}).destroy();
+  Channel.build({window: tgtwin,
+                 origin: "http://trickyco.de",
+                 scope: "closeTo:BadScope"}).destroy();
+  Channel.build({window: tgtwin,
+                 origin: "http://trickyco.de",
+                 scope: "closer:T:o:B:a:dScope"}).destroy();
+});
+</script>
+
+Except for double colons.
+
+<script class="doctest">
+snippet(function() {
+  Channel.build({window: tgtwin,
+                 origin: "http://trickyco.de",
+                 scope: "veryBad::Scope"});
+  // expect: Error: scope may not contain double colons: '::'
+});
+</script>
+</div>
+
 <p>Now we'll define a simple function in our child frame:</p>
 
 <div class="child-code-snippet" id="basic-query-response"></div>
@@ -327,6 +426,51 @@ snippet(function() {
 });
 </script>
 
+<div class="more" title="return types">
+<p>Of course, more than just strings can be returned from a remote call. Assume we have a trivial echo function like this:</p>
+
+<div class="child-code-snippet" id="echo"></div>
+
+<p>It's possible for a remote method to return any native JavaScript types, like numbers:</p>
+
+<script class="doctest">
+snippet(function() {
+  chan.call({method: "echo",
+             params: 0,
+             success: emit,
+             error: emit});
+  wait();
+  // expect: out(0)
+});
+</script>
+
+<p><code>null</code> works, too:</p>
+
+<script class="doctest">
+snippet(function() {
+  chan.call({method: "echo",
+             params: null,
+             success: emit,
+             error: emit});
+  wait();
+  // expect: out(null)
+});
+</script>
+
+<p>As do booleans:</p>
+
+<script class="doctest">
+snippet(function() {
+  chan.call({method: "echo",
+             params: false,
+             success: emit,
+             error: emit});
+  wait();
+  // expect: out(false)
+});
+</script>
+</div>
+
 <p>Remote methods can throw errors, too. Here's one in our child frame:</p>
 
 <div class="child-code-snippet" id="throw-object"></div>
@@ -342,6 +486,8 @@ snippet(function() {
   // expect: out("object_error_code", "object error message")
 });
 </script>
+
+<div class="more" title="exceptions">
 
 <p>But objects with keys other than <code>error</code> and <code>message</code>...</p>
 
@@ -416,6 +562,8 @@ snippet(function() {
 });
 </script>
 
+</div>
+
 <p>If your method's implementation is asychronous, you can use a transaction's <code>error()</code> method to propagate errors, too.</p>
 
 <div class="child-code-snippet" id="get-stuff"></div>
@@ -468,51 +616,6 @@ snippet(function() {
 });
 </script>
 
-<h2>Return Types</h2>
-
-<p>Assuming a trivial echo function like this:</p>
-
-<div class="child-code-snippet" id="echo"></div>
-
-<p>It's possible for a remote method to return any native JavaScript types, like numbers:</p>
-
-<script class="doctest">
-snippet(function() {
-  chan.call({method: "echo",
-             params: 0,
-             success: emit,
-             error: emit});
-  wait();
-  // expect: out(0)
-});
-</script>
-
-<p><code>null</code> works, too:</p>
-
-<script class="doctest">
-snippet(function() {
-  chan.call({method: "echo",
-             params: null,
-             success: emit,
-             error: emit});
-  wait();
-  // expect: out(null)
-});
-</script>
-
-<p>As do booleans:</p>
-
-<script class="doctest">
-snippet(function() {
-  chan.call({method: "echo",
-             params: false,
-             success: emit,
-             error: emit});
-  wait();
-  // expect: out(false)
-});
-</script>
-
 <h2>Timeouts</h2>
 
 <p>Clients can also be notified if a remote method invocation takes too long to complete by passing a <code>timeout</code> parameter to a channel's <code>call()</code> method.</p>
@@ -546,77 +649,9 @@ snippet(function() {
 });
 </script>
 
-<h2>Constructor Invocation</h2>
-
-If you pass a bogus first parameter to <code>Channel.build()</code>, a friendly exception is thrown.
-
-<script class="doctest">
-snippet(function() {
-  Channel.build();
-  // expect: Error: Channel build invoked without a proper object argument
-  Channel.build({});
-  // expect: Error: Channel.build() called without a valid window argument
-  Channel.build({window: document.getElementById("fakeChildId")});
-  // expect: Error: Channel.build() called without a valid window argument
-});
-</script>
-
-The <tt>origin</tt> parameter can take many different forms:
-
-<script class="doctest">
-snippet(function() {
-  tgtwin = document.getElementById("fakeChildId").contentWindow;
-  Channel.build({window: tgtwin, origin: "http://trickyco.de"}).destroy();
-  Channel.build({window: tgtwin,
-                 origin: "http://trickyco.de:8080"}).destroy();
-  Channel.build({window: tgtwin,
-                 origin: "http://trickyco.de:8080/"}).destroy();
-  Channel.build({window: tgtwin, origin: "http://localhost"}).destroy();
-  Channel.build({window: tgtwin, origin: "http://localhost:1234"}).destroy();
-  Channel.build({window: tgtwin, origin: "http://10.0.1.104:1234"}).destroy();
-});
-</script>
-
-...except for obvious exceptions.
-
-<script class="doctest">
-snippet(function() {
-  Channel.build({window: tgtwin, origin: "this isn't a valid origin!"});
-  // expect: Error: Channel.build() called with an invalid origin
-});
-</script>
-
-And the <tt>scope</tt> parameter can include almost any characters...
-
-<script class="doctest">
-snippet(function() {
-  var tgtwin = document.getElementById("fakeChildId").contentWindow;
-  Channel.build({window: tgtwin,
-                 origin: "http://trickyco.de",
-                 scope: "goodScope"}).destroy();
-  Channel.build({window: tgtwin,
-                 origin: "http://trickyco.de",
-                 scope: "speshulScope!@#%^@**(#(%*<>';][,.';'"}).destroy();
-  Channel.build({window: tgtwin,
-                 origin: "http://trickyco.de",
-                 scope: "closeTo:BadScope"}).destroy();
-  Channel.build({window: tgtwin,
-                 origin: "http://trickyco.de",
-                 scope: "closer:T:o:B:a:dScope"}).destroy();
-});
-</script>
-
-Except for double colons.
-
-<script class="doctest">
-snippet(function() {
-  Channel.build({window: tgtwin,
-                 origin: "http://trickyco.de",
-                 scope: "veryBad::Scope"});
-  // expect: Error: scope may not contain double colons: '::'
-});
-</script>
-
+</div>
+<div id="templates" style="display: none;">
+  <div class="more-link"><span>Learn more about <span class="title"></span> &#0187;</span></div>
 </div>
 </body>
 </html>
