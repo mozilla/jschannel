@@ -24,13 +24,41 @@ function wait() {
   Spy('out').wait();
 }
 
+function snippet() {
+}
+
+jQuery.fn.extend({
+  sourceCode: function() {
+    // MSIE 8 uses the 'text' property for script elements,
+    // while other browsers support standard DOM access.
+    return $(this).get(0).text || $(this).text();
+  }
+});
+
 $(window).ready(function() {
+  function convertSnippetScriptsToDoctests() {
+    $("pre.doctest script").each(function() {
+      var doctestLines = [];
+      var lines = $(this).sourceCode().split('\n');
+      jQuery.each(lines, function() {
+        if (this.match(/^  /)) {
+          var prompt = doctestLines.length ? '>' : '$';
+          doctestLines.push(prompt + this.slice(1));
+        }
+      });
+      var replacement = $('<span></span>');
+      replacement.text(doctestLines.join('\n'));
+      $(this).replaceWith(replacement);
+    });
+  }
+
   function trimDoctests() {
     $("pre.doctest").each(function() {
       $(this).text(jQuery.trim($(this).text()));
     });
   }
-  
+
+  convertSnippetScriptsToDoctests();
   trimDoctests();
 });
 
@@ -224,7 +252,11 @@ by Ian Bicking. The code examples are actually run on your browser to verify the
   <li><code>emit()</code> simply prints out its arguments, like so:
 
 <pre class="doctest">
-$ emit("hi", "there");
+<script>
+snippet(function() {
+  emit("hi", "there");
+});
+</script>
 out("hi", "there")
 </pre></li>
 </ul>
@@ -240,15 +272,19 @@ out("hi", "there")
 <!-- We want to use chan in other doctests, and in order to keep the
      variable around on MSIE8, we need to force it to be a global. -->
 <pre class="doctest">
-$ chan = Channel.build({
->   window: document.getElementById("childId").contentWindow,
->   origin: "*",
->   scope: "testScope",
->   onReady: function() {
->     emit("channel is ready!");
->   }
-> });
-> wait();
+<script>
+snippet(function() {
+  chan = Channel.build({
+    window: document.getElementById("childId").contentWindow,
+    origin: "*",
+    scope: "testScope",
+    onReady: function() {
+      emit("channel is ready!");
+    }
+  });
+  wait();
+});
+</script>
 out("channel is ready!")
 </pre>
 
@@ -261,10 +297,14 @@ out("channel is ready!")
 <p>And call it in our parent frame.</p>
 
 <pre class="doctest">
-$ chan.call({ method: "reverse",
->             params: "hello world!",
->             success: function(v) { emit(v.toString()); } });
-> wait();
+<script>
+snippet(function() {
+  chan.call({ method: "reverse",
+              params: "hello world!",
+              success: function(v) { emit(v.toString()); } });
+  wait();
+});
+</script>
 out("!dlrow olleh")
 </pre>
 
@@ -275,10 +315,14 @@ out("!dlrow olleh")
 <p>Calling that produces this:</p>
 
 <pre class="doctest">
-$ chan.call({method: "throwObject",
->            error: emit,
->            success: emit});
-> wait();
+<script>
+snippet(function() {
+  chan.call({method: "throwObject",
+             error: emit,
+             success: emit});
+  wait();
+});
+</script>
 out("object_error_code", "object error message")
 </pre>
 
@@ -289,10 +333,14 @@ out("object_error_code", "object error message")
 <p>...get smushed into strings by attempting to serialize them to JSON.</p>
 
 <pre class="doctest">
-$ chan.call({method: "throwSmushedObject",
->            error: emit,
->            success: emit});
-> wait();
+<script>
+snippet(function() {
+  chan.call({method: "throwSmushedObject",
+             error: emit,
+             success: emit});
+  wait();
+});
+</script>
 out("runtime_error", "{\"dont\":\"smush\",\"me\":\"no!!\"...}")
 </pre>
 
@@ -301,10 +349,14 @@ out("runtime_error", "{\"dont\":\"smush\",\"me\":\"no!!\"...}")
 <div class="child-code-snippet" id="throw-tostringed-object"></div>
 
 <pre class="doctest">
-$ chan.call({method: "throwToStringedObject",
->            error: emit,
->            success: emit});
-> wait();
+<script>
+snippet(function() {
+  chan.call({method: "throwToStringedObject",
+             error: emit,
+             success: emit});
+  wait();
+});
+</script>
 out("runtime_error", "[object...]")
 </pre>
 
@@ -313,10 +365,14 @@ out("runtime_error", "[object...]")
 <div class="child-code-snippet" id="throw-array"></div>
 
 <pre class="doctest">
-$ chan.call({method: "throwArray",
->            error: emit,
->            success: emit});
-> wait();
+<script>
+snippet(function() {
+  chan.call({method: "throwArray",
+             error: emit,
+             success: emit});
+  wait();
+});
+</script>
 out("array_error_code", "array error message")
 </pre>
 
@@ -325,10 +381,14 @@ out("array_error_code", "array error message")
 <div class="child-code-snippet" id="throw-string"></div>
 
 <pre class="doctest">
-$ chan.call({method: "throwString",
->            error: emit,
->            success: emit});
-> wait();
+<script>
+snippet(function() {
+  chan.call({method: "throwString",
+             error: emit,
+             success: emit});
+  wait();
+});
+</script>
 out("runtime_error", "this is a string")
 </pre>
 
@@ -337,11 +397,15 @@ out("runtime_error", "this is a string")
 <div class="child-code-snippet" id="accidental-throw"></div>
 
 <pre class="doctest">
-$ chan.call({method: "accidentalThrow",
->            error: emit,
->            success: emit});
-> // Note that the exception content varies by browser.
-> wait();
+<script>
+snippet(function() {
+  chan.call({method: "accidentalThrow",
+             error: emit,
+             success: emit});
+  // Note that the exception content varies by browser.
+  wait();
+});
+</script>
 out("runtime_error", ...)
 </pre>
 
@@ -350,10 +414,14 @@ out("runtime_error", ...)
 <div class="child-code-snippet" id="get-stuff"></div>
 
 <pre class="doctest">
-$ chan.call({method: "getStuff",
->            error: emit,
->            success: emit});
-> wait();
+<script>
+snippet(function() {
+  chan.call({method: "getStuff",
+             error: emit,
+             success: emit});
+  wait();
+});
+</script>
 out("mega_fail", "i could not get your stuff.")
 </pre>
 
@@ -402,33 +470,45 @@ out("complete")
 <p>It's possible for a remote method to return any native JavaScript types, like numbers:</p>
 
 <pre class="doctest">
-$ chan.call({method: "echo",
->            params: 0,
->            success: emit,
->            error: emit});
-> wait();
+<script>
+snippet(function() {
+  chan.call({method: "echo",
+             params: 0,
+             success: emit,
+             error: emit});
+  wait();
+});
+</script>
 out(0)
 </pre>
 
 <p><code>null</code> works, too:</p>
 
 <pre class="doctest">
-$ chan.call({method: "echo",
->            params: null,
->            success: emit,
->            error: emit});
-> wait();
+<script>
+snippet(function() {
+  chan.call({method: "echo",
+             params: null,
+             success: emit,
+             error: emit});
+  wait();
+});
+</script>
 out(null)
 </pre>
 
 <p>As do booleans:</p>
 
 <pre class="doctest">
-$ chan.call({method: "echo",
->            params: false,
->            success: emit,
->            error: emit});
-> wait();
+<script>
+snippet(function() {
+  chan.call({method: "echo",
+             params: false,
+             success: emit,
+             error: emit});
+  wait();
+});
+</script>
 out(false)
 </pre>
 
@@ -439,25 +519,33 @@ out(false)
 <p>For instance, we can try calling a nonexistent method with a timeout:</p>
 
 <pre class="doctest">
-$ chan.call({ method: "nonexistent",
->             timeout: 50,
->             error: emit,
->             success: emit });
-> wait();
+<script>
+snippet(function() {
+  chan.call({ method: "nonexistent",
+              timeout: 50,
+              error: emit,
+              success: emit });
+  wait();
+});
+</script>
 out("timeout_error", "timeout (50ms) exceeded on method 'testScope::nonexistent'")
 </pre>
 
 <p>Of course, the timeout doesn't get triggered if the method call actually completes...</p>
 
 <pre class="doctest">
-$ var x = [];
-> chan.call({ method: "echo",
->             params: "echo called",
->             timeout: 100,
->             error: function(e, m) { x.push(e); },
->             success: function(m) { x.push(m); }});
-> setTimeout(function() { emit.apply(null, x); }, 250);
-> wait();
+<script>
+snippet(function() {
+  var x = [];
+  chan.call({ method: "echo",
+              params: "echo called",
+              timeout: 100,
+              error: function(e, m) { x.push(e); },
+              success: function(m) { x.push(m); }});
+  setTimeout(function() { emit.apply(null, x); }, 250);
+  wait();
+});
+</script>
 out("echo called")
 </pre>
 
