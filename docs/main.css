@@ -1,0 +1,106 @@
+@import url('doctestjs/doctest.css');
+
+html, body {
+    font-family: "Helvetica Neue", Helvetica, Arial, FreeSans, sans-serif;
+}
+
+a {
+  color: inherit;
+}
+
+a:hover {
+  background: yellow;
+}
+
+#all-tests-passed, #some-tests-failed {
+  font-weight: bold;
+  display: none;
+}
+
+#all-tests-passed {
+  color: green;
+}
+
+#some-tests-failed {
+  color: red;
+}
+
+#doctestOutput {
+  display: none;
+}
+
+div.child-code-snippet {
+  background: #f0f0f0;
+  padding: 1em;
+}
+
+div.child-code-snippet code {
+  display: block;
+  white-space: pre-wrap;
+}
+
+#container {
+  margin: 0 auto;
+  width: 40em;
+}
+
+h1 {
+  font-size: 24pt;
+}
+
+h2 { 
+  font-size: 18pt;
+}
+
+pre {
+  color: gray;
+  white-space: pre-wrap;
+}
+
+pre, code {
+  font-family: Monaco, "Lucida Console", monospace;
+  font-size: 9pt;
+}
+
+span.doctest-example-prompt {
+  color: gray;
+}
+
+span.doctest-example-output {
+  color: gray;
+}
+
+span.doctest-example-code-line {
+  color: black;
+}
+
+div.time-passes {
+  font-size: 8pt;
+  font-family: "Helvetica Neue", Helvetica, Arial, FreeSans, sans-serif;
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+div.time-passes span {
+  border: 1px dotted gray;
+  background: #f0f0f0;
+  color: black;
+  padding: 2px;  
+}
+
+pre.doctest {
+  border-left: none;
+}
+
+.more-link {
+  text-align: right;
+}
+
+.more-link > span {
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.more-link > span:hover {
+  text-decoration: underline;
+}
