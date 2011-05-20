@@ -5,8 +5,11 @@
 
 <title>JSChannel Documentation</title>
 
+<link rel="stylesheet" href="sh.css">
 <script type="text/javascript" src="doctestjs/doctest.js"></script>
 <script type="text/javascript" src="json2.js"></script>
+<script type="text/javascript" src="sh_main.js"></script>
+<script type="text/javascript" src="sh_javascript.min.js"></script>
 <script type="text/javascript" src="../src/jschannel.js"></script>
 <script type="text/javascript" src="jquery.min.js"></script>
 <script>
@@ -32,10 +35,19 @@ function snippet() {
 }
 
 jQuery.fn.extend({
+  // Assuming the first matched element is a script tag,
+  // return its inline source code.
   sourceCode: function() {
     // MSIE 8 uses the 'text' property for script elements,
     // while other browsers support standard DOM access.
     return $(this).get(0).text || $(this).text();
+  },
+  // Syntax highlight the set of matched elements using
+  // the given language.
+  syntaxHighlight: function(language) {
+    this.each(function() {
+      sh_highlightElement(this, sh_languages[language]);
+    });
   }
 });
 
@@ -85,7 +97,9 @@ $(window).load(function() {
             params: this.id,
             success: function(code) {
               code = jQuery.trim(code);
-              $(element).append($('<code></code>').text(code));
+              var elem = $('<code></code>').text(code);
+              elem.syntaxHighlight('javascript');
+              $(element).append(elem);
             }
           });
         });
@@ -167,13 +181,12 @@ a:hover {
 }
 
 div.child-code-snippet {
-  background: #e0e0e0;
+  background: #f0f0f0;
   padding: 1em;
 }
 
 div.child-code-snippet code {
   display: block;
-  font-family: monospace;
   white-space: pre-wrap;
 }
 
