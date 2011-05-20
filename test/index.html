@@ -41,18 +41,23 @@ jQuery.fn.extend({
 
 $(window).ready(function() {
   function convertSnippetScriptsToDoctests() {
-    $("pre.doctest script").each(function() {
+    $("script.doctest").each(function() {
       var doctestLines = [];
       var lines = $(this).sourceCode().split('\n');
+      var inPrompt = false;
       jQuery.each(lines, function() {
-        if (this.match(/^  /)) {
-          var prompt = doctestLines.length ? '>' : '$';
+        var expect = this.match(/^  \/\/ expect: (.*)/);
+        if (expect) {
+          doctestLines.push(expect[1]);
+          inPrompt = false;
+        } else if (this.match(/^  /)) {
+          var prompt = inPrompt ? '>' : '$';
           doctestLines.push(prompt + this.slice(1));
+          inPrompt = true;
         }
       });
-      var replacement = $('<span></span>');
-      replacement.text(doctestLines.join('\n'));
-      $(this).replaceWith(replacement);
+      var pre = $('<pre class="doctest"></pre>');
+      $(this).replaceWith(pre.text(doctestLines.join('\n')));
     });
   }
 
@@ -254,14 +259,12 @@ by Ian Bicking. The code examples are actually run on your browser to verify the
 <ul>
   <li><code>emit()</code> simply prints out its arguments, like so:
 
-<pre class="doctest">
-<script>
+<script class="doctest">
 snippet(function() {
   emit("hi", "there");
+  // expect: out("hi", "there")
 });
-</script>
-out("hi", "there")
-</pre></li>
+</script></li>
 </ul>
 
 <h2>Method Invocation</h2>
@@ -274,8 +277,7 @@ out("hi", "there")
 
 <!-- We want to use chan in other doctests, and in order to keep the
      variable around on MSIE8, we need to force it to be a global. -->
-<pre class="doctest">
-<script>
+<script class="doctest">
 snippet(function() {
   chan = Channel.build({
     window: document.getElementById("childId").contentWindow,
@@ -286,10 +288,9 @@ snippet(function() {
     }
   });
   wait();
+  // expect: out("channel is ready!")
 });
 </script>
-out("channel is ready!")
-</pre>
 
 <p>Note that the <code>onReady</code> callback is called once actual communication has been established between the parent page and child frame. If the child frame hadn't set up its end of the channel, for instance, <code>onReady</code> would never get called.</p>
 
@@ -299,17 +300,15 @@ out("channel is ready!")
 
 <p>And call it in our parent frame.</p>
 
-<pre class="doctest">
-<script>
+<script class="doctest">
 snippet(function() {
   chan.call({ method: "reverse",
               params: "hello world!",
               success: function(v) { emit(v.toString()); } });
   wait();
+  // expect: out("!dlrow olleh")
 });
 </script>
-out("!dlrow olleh")
-</pre>
 
 <p>Remote methods can throw errors, too. Here's one in our child frame:</p>
 
@@ -317,17 +316,15 @@ out("!dlrow olleh")
 
 <p>Calling that produces this:</p>
 
-<pre class="doctest">
-<script>
+<script class="doctest">
 snippet(function() {
   chan.call({method: "throwObject",
              error: emit,
              success: emit});
   wait();
+  // expect: out("object_error_code", "object error message")
 });
 </script>
-out("object_error_code", "object error message")
-</pre>
 
 <p>But objects with keys other than <code>error</code> and <code>message</code>...</p>
 
@@ -335,98 +332,86 @@ out("object_error_code", "object error message")
 
 <p>...get smushed into strings by attempting to serialize them to JSON.</p>
 
-<pre class="doctest">
-<script>
+<script class="doctest">
 snippet(function() {
   chan.call({method: "throwSmushedObject",
              error: emit,
              success: emit});
   wait();
+  // expect: out("runtime_error", "{\"dont\":\"smush\",\"me\":\"no!!\"...}")
 });
 </script>
-out("runtime_error", "{\"dont\":\"smush\",\"me\":\"no!!\"...}")
-</pre>
 
 <p>But objects that can't be serialized to JSON just get coerced to strings:</p>
 
 <div class="child-code-snippet" id="throw-tostringed-object"></div>
 
-<pre class="doctest">
-<script>
+<script class="doctest">
 snippet(function() {
   chan.call({method: "throwToStringedObject",
              error: emit,
              success: emit});
   wait();
+  // expect: out("runtime_error", "[object...]")
 });
 </script>
-out("runtime_error", "[object...]")
-</pre>
 
 <p>You can throw arrays, too:</p>
 
 <div class="child-code-snippet" id="throw-array"></div>
 
-<pre class="doctest">
-<script>
+<script class="doctest">
 snippet(function() {
   chan.call({method: "throwArray",
              error: emit,
              success: emit});
   wait();
+  // expect: out("array_error_code", "array error message")
 });
 </script>
-out("array_error_code", "array error message")
-</pre>
 
 <p>And strings...</p>
 
 <div class="child-code-snippet" id="throw-string"></div>
 
-<pre class="doctest">
-<script>
+<script class="doctest">
 snippet(function() {
   chan.call({method: "throwString",
              error: emit,
              success: emit});
   wait();
+  // expect: out("runtime_error", "this is a string")
 });
 </script>
-out("runtime_error", "this is a string")
-</pre>
 
 <p>Totally unintentional exceptions get propagated, too:</p>
 
 <div class="child-code-snippet" id="accidental-throw"></div>
 
-<pre class="doctest">
-<script>
+<script class="doctest">
 snippet(function() {
   chan.call({method: "accidentalThrow",
              error: emit,
              success: emit});
   // Note that the exception content varies by browser.
   wait();
+  // expect: out("runtime_error", ...)
 });
 </script>
-out("runtime_error", ...)
-</pre>
 
 <p>If your method's implementation is asychronous, you can use a transaction's <code>error()</code> method to propagate errors, too.</p>
 
 <div class="child-code-snippet" id="get-stuff"></div>
 
-<pre class="doctest">
-<script>
+<script class="doctest">
 snippet(function() {
   chan.call({method: "getStuff",
              error: emit,
              success: emit});
   wait();
+  // expect: out("mega_fail", "i could not get your stuff.")
 });
 </script>
-out("mega_fail", "i could not get your stuff.")
-</pre>
 
 <h2>Callbacks</h2>
 
@@ -472,48 +457,42 @@ out("complete")
 
 <p>It's possible for a remote method to return any native JavaScript types, like numbers:</p>
 
-<pre class="doctest">
-<script>
+<script class="doctest">
 snippet(function() {
   chan.call({method: "echo",
              params: 0,
              success: emit,
              error: emit});
   wait();
+  // expect: out(0)
 });
 </script>
-out(0)
-</pre>
 
 <p><code>null</code> works, too:</p>
 
-<pre class="doctest">
-<script>
+<script class="doctest">
 snippet(function() {
   chan.call({method: "echo",
              params: null,
              success: emit,
              error: emit});
   wait();
+  // expect: out(null)
 });
 </script>
-out(null)
-</pre>
 
 <p>As do booleans:</p>
 
-<pre class="doctest">
-<script>
+<script class="doctest">
 snippet(function() {
   chan.call({method: "echo",
              params: false,
              success: emit,
              error: emit});
   wait();
+  // expect: out(false)
 });
 </script>
-out(false)
-</pre>
 
 <h2>Timeouts</h2>
 
@@ -521,23 +500,20 @@ out(false)
 
 <p>For instance, we can try calling a nonexistent method with a timeout:</p>
 
-<pre class="doctest">
-<script>
+<script class="doctest">
 snippet(function() {
   chan.call({ method: "nonexistent",
               timeout: 50,
               error: emit,
               success: emit });
   wait();
+  // expect: out("timeout_error", "timeout (50ms) exceeded on method 'testScope::nonexistent'")
 });
 </script>
-out("timeout_error", "timeout (50ms) exceeded on method 'testScope::nonexistent'")
-</pre>
 
 <p>Of course, the timeout doesn't get triggered if the method call actually completes...</p>
 
-<pre class="doctest">
-<script>
+<script class="doctest">
 snippet(function() {
   var x = [];
   chan.call({ method: "echo",
@@ -547,10 +523,9 @@ snippet(function() {
               success: function(m) { x.push(m); }});
   setTimeout(function() { emit.apply(null, x); }, 250);
   wait();
+  // expect: out("echo called")
 });
 </script>
-out("echo called")
-</pre>
 
 <h2>Constructor Invocation</h2>
 
