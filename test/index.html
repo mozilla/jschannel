@@ -124,7 +124,7 @@ $(window).load(function() {
   doctest();
 
   whenDoctestsFinish(function(numFailed) {
-    if (numFailed == 0)
+    if (numFailed == 0) {
       $('span.doctest-example-code-line').each(function() {
         if ($(this).text() == 'wait();') {
           var prompt = $(this).prev('.doctest-example-prompt').get(0);
@@ -133,11 +133,15 @@ $(window).load(function() {
           // Not sure why $(newline).remove() doesn't work, so...
           newline.parentNode.removeChild(newline);
 
-          $(this).parent().append('<div class="time-passes"><span>' +
-                                  'Time passes\u2026</span></div>');
+          $(this).parent().after('<div class="time-passes"><span>' +
+                                 'Time passes\u2026</span></div>');
           $(this).add(prompt).remove();
         }
       });
+      
+      $('span.doctest-example-prompt').remove();
+      $('span.doctest-example-code').syntaxHighlight('javascript');
+    }
     
     $('#please-wait').fadeOut(function() {
       if (numFailed == 0)
