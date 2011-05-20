@@ -281,6 +281,7 @@ pre.doctest {
 <iframe style="display: none;" id="childId" src="index_child.html"></iframe>
 <iframe style="display: none;" id="fakeChildId"></iframe>
 <div id="container">
+<a href="https://github.com/mozilla/jschannel"><img style="position: absolute; top: 0; right: 0; border: 0;" src="github-ribbon.png" alt="Fork me on GitHub"></a>
 <h1>JSChannel Documentation</h1>
 
 <p id="please-wait">Verifying the correctness of the code on this page... <img src="ajax-loader.gif"></p>
@@ -289,13 +290,17 @@ pre.doctest {
 <p id="some-tests-failed">Some code on this page doesn't work.</p>
 <pre id="doctestOutput"></pre>
 
+<h2>Introduction</h2>
+
+<p>JSChannel is a small JavaScript abstraction layer on top of HTML5 cross-document messaging. It builds rich messaging semantics out of <a href="https://developer.mozilla.org/en/DOM/window.postMessage">window.postMessage</a>.</p>
+
 <h2>About The Code Examples</h2>
 
 <p>This page uses
 the <a href="http://ianb.github.com/doctestjs/">doctestjs</a> library
 by Ian Bicking. The code examples are actually run on your browser to verify their correctness.</p>
 
-<p>All the code examples in this documentation assume communication between a parent page and a child iframe. Example code executed in the child iframe looks like this:</p>
+<p>All the code examples in this documentation assume communication between a parent page and a child frame. Example code executed in the child frame looks like this:</p>
 
 <div class="child-code-snippet" id="sample-child-code"></div>
 
@@ -314,7 +319,7 @@ snippet(function() {
 
 <h2>Page Setup</h2>
 
-JSChannel has no dependencies, so there's very little setup involved. You can get started by making a simple HTML page that includes the JSChannel script:
+JSChannel has no dependencies, so there's very little setup involved. You can get started by making a simple HTML page that includes the <a href="../src/jschannel.js">JSChannel script</a>:
 
 <pre>
 &lt;script src="jschannel.js"&gt;&lt;/script&gt;
