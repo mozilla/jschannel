@@ -79,6 +79,13 @@ chan.bind("throwToStringedObject", function(trans, s) {
 });
 </script>
 
+<script id="twiddle-thumbs">
+chan.bind("twiddleThumbs", function(trans) {
+  setTimeout(function() { trans.complete("thumbs twiddled!"); }, 50);
+  trans.delayReturn(true);
+});
+</script>
+
 <script id="get-stuff">
 chan.bind("getStuff", function(trans) {
     setTimeout(function() {
@@ -94,11 +101,18 @@ chan.bind("sendNotification", function(trans, s) {
 });
 </script>
 
+<script id="simple-callback">
+chan.bind("simple_cb", function(trans, params) {
+  params.cb("you called?");
+  trans.complete("complete");
+});
+</script>
+
 <script id="callbacks">
-chan.bind("caller_backer", function(trans, a) {
-    if (a.cb) a.cb("you called?");
-    if (a.cb2) a.cb2("you called again!?");
-    if (a.nested && a.nested.cb) a.nested.cb("STOP CALLING ME!");
+chan.bind("caller_backer", function(trans, params) {
+    params.cb("you called?");
+    params.cb2("you called again!?");
+    params.nested.cb("STOP CALLING ME!");
     trans.complete("complete");
 });
 </script>

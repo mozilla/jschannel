@@ -312,7 +312,23 @@ snippet(function() {
 </script></li>
 </ul>
 
-<h2>Method Invocation</h2>
+<h2>Page Setup</h2>
+
+JSChannel has no dependencies, so there's very little setup involved. You can get started by making a simple HTML page that includes the JSChannel script:
+
+<pre>
+&lt;script src="jschannel.js"&gt;&lt;/script&gt;
+</pre>
+
+And a trivial child frame:
+
+<pre>
+&lt;iframe id="childId" src="child.html"&gt;&lt;/iframe&gt;
+</pre>
+
+The contents of the child frame don't matter, so long as it includes the JSChannel script (so that it can communicate with its parent).
+
+<h2>Creating a Channel</h2>
 
 <p>Let's create a channel in our child frame:</p>
 
@@ -409,6 +425,8 @@ snippet(function() {
 });
 </script>
 </div>
+
+<h2>Remote Methods</h2>
 
 <p>Now we'll define a simple function in our child frame:</p>
 
@@ -564,7 +582,23 @@ snippet(function() {
 
 </div>
 
-<p>If your method's implementation is asychronous, you can use a transaction's <code>error()</code> method to propagate errors, too.</p>
+<h3>Transactions</h3>
+
+<p>If your method's implementation is asychronous, you'll have to use the transaction object that's automatically passed as the first argument to a remote method, like so:</p>
+
+<div class="child-code-snippet" id="twiddle-thumbs"></div>
+
+<p>The caller doesn't do anything differently, since it's always calling the remote method asynchronously:</p>
+
+<script class="doctest">
+snippet(function() {
+  chan.call({method: "twiddleThumbs", success: emit});
+  wait();
+  // expect: out("thumbs twiddled!")
+});
+</script>
+
+<p>You can use a transaction's <code>error()</code> method to propagate errors, too.</p>
 
 <div class="child-code-snippet" id="get-stuff"></div>
 
@@ -578,32 +612,29 @@ snippet(function() {
 });
 </script>
 
-<h2>Callbacks</h2>
+<h3>Callbacks</h3>
 
-<p>Clients can pass functions as parameters to remote methods, and they can be called by the implementer.</p>
+<p>Clients can pass functions as parameters to remote methods, and they can be called by the implementer. Here's a trivial example:</p>
+
+<div class="child-code-snippet" id="simple-callback"></div>
+
+<script class="doctest">
+snippet(function() {
+  chan.call({method: "simple_cb", params: { cb: emit }, success: emit});
+  wait();
+  // expect: out("you called?")
+  // expect: out("complete")
+});
+</script>
+
+<div class="more" title="callbacks">
+
+<p>Callback parameters can be nested, too, and they arrive in the order in which they were originally called:</p>
 
 <div class="child-code-snippet" id="callbacks"></div>
 
 <script class="doctest">
 snippet(function() {
-  chan.call({method: "caller_backer",
-             params: { cb: emit },
-             success: emit});
-  wait();
-  // expect: out("you called?")
-  // expect: out("complete")
-  chan.call({method: "caller_backer",
-             params: { cb2: emit },
-             success: emit});
-  wait();
-  // expect: out("you called again!?")
-  // expect: out("complete")
-  chan.call({method: "caller_backer",
-             params: { nested: { cb: emit } },
-             success: emit});
-  wait();
-  // expect: out("STOP CALLING ME!")
-  // expect: out("complete")
   chan.call({method: "caller_backer",
              params: { cb: emit, cb2: emit, nested: { cb: emit } }, 
              error: emit,
@@ -615,8 +646,9 @@ snippet(function() {
   // expect: out("complete")
 });
 </script>
+</div>
 
-<h2>Timeouts</h2>
+<h3>Timeouts</h3>
 
 <p>Clients can also be notified if a remote method invocation takes too long to complete by passing a <code>timeout</code> parameter to a channel's <code>call()</code> method.</p>
 
@@ -633,6 +665,7 @@ snippet(function() {
 });
 </script>
 
+<div class="more" title="timeouts">
 <p>Of course, the timeout doesn't get triggered if the method call actually completes...</p>
 
 <script class="doctest">
@@ -648,6 +681,7 @@ snippet(function() {
   // expect: out("echo called")
 });
 </script>
+</div>
 
 </div>
 <div id="templates" style="display: none;">
