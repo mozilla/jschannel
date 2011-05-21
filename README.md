@@ -81,6 +81,11 @@ document in an iframe (child.html) and invokes a function on her.
     </head>
     </html>
 
+## Documentation
+
+Full documentation for JSChannel can be found
+[here](http://mozilla.github.com/jschannel/docs/).
+
 ## Influences
 
 [JSON-RPC](http://groups.google.com/group/json-rpc/web/json-rpc-2-0)
