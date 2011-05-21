@@ -39,43 +39,43 @@ var chan = Channel.build({window: window.parent,
 
 <script id="basic-query-response">
 chan.bind("reverse", function(trans, s) {
-    return s.split("").reverse().join("");
+  return s.split("").reverse().join("");
 });
 </script>
 
 <script id="throw-array">
 chan.bind("throwArray", function(trans, s) {
-    throw [ "array_error_code", 'array error message'];
+  throw [ "array_error_code", 'array error message'];
 });
 </script>
 
 <script id="throw-object">
 chan.bind("throwObject", function(trans, s) {
-    throw { error: "object_error_code", message: 'object error message' };
+  throw {error: "object_error_code", message: 'object error message'};
 });
 </script>
 
 <script id="throw-string">
 chan.bind("throwString", function(trans, s) {
-    throw "this is a string";
+  throw "this is a string";
 });
 </script>
 
 <script id="accidental-throw">
 chan.bind("accidentalThrow", function(trans, s) {
-    window.nonExistentMethod();
+  window.nonExistentMethod();
 });
 </script>
 
 <script id="throw-smushed-object">
 chan.bind("throwSmushedObject", function(trans, s) {
-    throw {dont:"smush",me:"no!!"};
+  throw {dont:"smush",me:"no!!"};
 });
 </script>
 
 <script id="throw-tostringed-object">
 chan.bind("throwToStringedObject", function(trans, s) {
-    throw window;
+  throw window;
 });
 </script>
 
@@ -88,17 +88,16 @@ chan.bind("twiddleThumbs", function(trans) {
 
 <script id="get-stuff">
 chan.bind("getStuff", function(trans) {
-    setTimeout(function() {
-        trans.error("mega_fail", "i could not get your stuff.");
-    }, 50);
-    trans.delayReturn(true);
+  setTimeout(function() {
+    trans.error("mega_fail", "i could not get your stuff.");
+  }, 50);
+  trans.delayReturn(true);
 });
 </script>
 
 <script id="ping">
 chan.bind("ping", function(trans, params) {
-  if (trans)
-    throw "i should never be called as a method!";
+  if (trans) throw "i should never be called as a method!";
   chan.notify({method: "pong", params: params});
 });
 </script>
@@ -112,10 +111,10 @@ chan.bind("simple_cb", function(trans, params) {
 
 <script id="callbacks">
 chan.bind("caller_backer", function(trans, params) {
-    params.cb("you called?");
-    params.cb2("you called again!?");
-    params.nested.cb("STOP CALLING ME!");
-    trans.complete("complete");
+  params.cb("you called?");
+  params.cb2("you called again!?");
+  params.nested.cb("STOP CALLING ME!");
+  trans.complete("complete");
 });
 </script>
 

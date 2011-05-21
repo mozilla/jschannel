@@ -182,9 +182,9 @@ snippet(function() {
 
 <script class="doctest">
 snippet(function() {
-  chan.call({ method: "reverse",
-              params: "hello world!",
-              success: function(v) { emit(v.toString()); } });
+  chan.call({method: "reverse",
+             params: "hello world!",
+             success: function(v) { emit(v.toString()); }});
   wait();
   // expect: out("!dlrow olleh")
 });
@@ -402,10 +402,10 @@ snippet(function() {
 
 <script class="doctest">
 snippet(function() {
-  chan.call({ method: "nonexistent",
-              timeout: 50,
-              error: emit,
-              success: emit });
+  chan.call({method: "nonexistent",
+             timeout: 50,
+             error: emit,
+             success: emit});
   wait();
   // expect: out("timeout_error", "timeout (50ms) exceeded on method 'testScope::nonexistent'")
 });
