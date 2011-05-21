@@ -70,7 +70,9 @@ And a trivial child frame:
 &lt;iframe id="childId" src="child.html"&gt;&lt;/iframe&gt;
 </pre>
 
-The contents of the child frame don't matter, so long as it includes the JSChannel script (so that it can communicate with its parent).
+<p>The contents of the child frame don't matter, so long as it includes the JSChannel script (so that it can communicate with its parent).</p>
+
+<p>Note that we're just using a child frame for the sake of example; as a rule, JSChannel can be used anywhere that <code>window.postMessage()</code> can.</p>
 
 <h2>Creating a Channel</h2>
 
@@ -426,6 +428,21 @@ snippet(function() {
 });
 </script>
 </div>
+
+<h2>Notifications</h2>
+
+<p>Notifications are similar to method calls, but are "fire-and-forget", lacking any concept of an error or return value. For example:</p>
+
+<div class="child-code-snippet" id="ping"></div>
+
+<script class="doctest">
+snippet(function() {
+  chan.bind("pong", emit);
+  chan.notify({method: "ping", params: "hai2u"});
+  wait();
+  // expect: out(null, "hai2u")
+});
+</script>
 
 </div>
 <div id="templates" style="display: none;">

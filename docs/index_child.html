@@ -95,9 +95,11 @@ chan.bind("getStuff", function(trans) {
 });
 </script>
 
-<script>
-chan.bind("sendNotification", function(trans, s) {
-    chan.notify({method: "notify", params: "Hi my name is Simon, and I like to do drawings!" });
+<script id="ping">
+chan.bind("ping", function(trans, params) {
+  if (trans)
+    throw "i should never be called as a method!";
+  chan.notify({method: "pong", params: params});
 });
 </script>
 
