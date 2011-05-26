@@ -128,6 +128,13 @@ snippet(function() {
   Channel.build({window: tgtwin, origin: "http://localhost"}).destroy();
   Channel.build({window: tgtwin, origin: "http://localhost:1234"}).destroy();
   Channel.build({window: tgtwin, origin: "http://10.0.1.104:1234"}).destroy();
+  var tricky_caps = Channel.build({window: tgtwin, 
+                                     origin: "http://TrIcKyCaPiTaLiZaTiOn.CoM"});
+  var overlaps_tricky_caps = Channel.build({window: tgtwin, 
+                                            origin: "http://trickycapitalization.com"});
+  // expect: Error: A channel is already bound to the same window which overlaps with origin 'http://trickycapitalization.com' and has scope ''
+  tricky_caps.destroy();
+  
 });
 </script>
 
