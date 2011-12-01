@@ -123,7 +123,7 @@
     var s_onMessage = function(e) {
         try {
           var m = JSON.parse(e.data);
-          if (typeof m !== 'object') throw "malformed";
+          if (typeof m !== 'object' || m === null) throw "malformed";
         } catch(e) {
           // just ignore any posted messages that do not consist of valid JSON
           return;
