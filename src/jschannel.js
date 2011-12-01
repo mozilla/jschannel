@@ -121,14 +121,17 @@
     // arrangement allows certain efficiencies, message data is only parsed once and dispatch
     // is more efficient, especially for large numbers of simultaneous channels.
     var s_onMessage = function(e) {
-        var m = JSON.parse(e.data);
-        if (typeof m !== 'object') return;
+        try {
+          var m = JSON.parse(e.data);
+          if (typeof m !== 'object') throw "malformed";
+        } catch(e) {
+          // just ignore any posted messages that do not consist of valid JSON
+          return;
+        }
 
         var w = e.source;
         var o = e.origin;
-        var s = null;
-        var i = null;
-        var meth = null;
+        var s, i, meth;
 
         if (typeof m.method === 'string') {
             var ar = m.method.split('::');
@@ -146,7 +149,7 @@
         // o is message origin
         // m is parsed message
         // s is message scope
-        // i is message id (or null)
+        // i is message id (or undefined)
         // meth is unscoped method name
         // ^^ based on these factors we can route the message
 
