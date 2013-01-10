@@ -447,7 +447,7 @@ snippet(function() {
   chan.bind("pong", emit);
   chan.notify({method: "ping", params: "hai2u"});
   wait();
-  // expect: out(null, "hai2u")
+  // expect: out({origin: "null"}, "hai2u")
 });
 </script>
 

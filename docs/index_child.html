@@ -96,8 +96,9 @@ chan.bind("getStuff", function(trans) {
 </script>
 
 <script id="ping">
-chan.bind("ping", function(trans, params) {
-  if (trans) throw "i should never be called as a method!";
+chan.bind("ping", function(context, params) {
+  // context.origin contains the origin also for notifications.
+  if (!context.origin) throw "where's your origin?";
   chan.notify({method: "pong", params: params});
 });
 </script>

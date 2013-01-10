@@ -452,7 +452,7 @@
                     if (regTbl[method]) {
                         // yep, there's a handler for that.
                         // transaction is null for notifications.
-                        regTbl[method](null, m.params);
+                        regTbl[method]({ origin: origin }, m.params);
                         // if the client throws, we'll just let it bubble out
                         // what can we do?  Also, here we'll ignore return values
                     }
