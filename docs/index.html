@@ -444,10 +444,10 @@ snippet(function() {
 
 <script class="doctest">
 snippet(function() {
-  chan.bind("pong", emit);
+  chan.bind("pong", function(context, params) { emit(params); });
   chan.notify({method: "ping", params: "hai2u"});
   wait();
-  // expect: out({origin: "null"}, "hai2u")
+  // expect: out("hai2u")
 });
 </script>
 
