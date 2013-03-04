@@ -217,6 +217,11 @@
      *                instantiated and an application level handshake is exchanged.
      *                the onReady function will be passed a single argument which is
      *                the channel object that was returned from build().
+     *   cfg.reconnect - A boolean value - if true, the channel allows reconnection
+     *                useful when the page in a child frame is reloaded and wants
+     *                to re-establish connection with parent window using the same
+     *                origin, scope and bindings.
+     *
      */
     return {
         build: function(cfg) {
@@ -224,7 +229,7 @@
                 if (cfg.debugOutput && window.console && window.console.log) {
                     // try to stringify, if it doesn't work we'll let javascript's built in toString do its magic
                     try { if (typeof m !== 'string') m = JSON.stringify(m); } catch(e) { }
-                    console.log("["+chanId+"] " + m);
+                    window.console.log("["+chanId+"] " + m);
                 }
             };
 
@@ -493,15 +498,22 @@
 
             var onReady = function(trans, type) {
                 debug('ready msg received');
-                if (ready) throw "received ready message while in ready state.  help!";
-
-                if (type === 'ping') {
-                    chanId += '-R';
+                if (ready && !cfg.reconnect) {
+                    throw "received ready message while in ready state.  help!";
                 } else {
-                    chanId += '-L';
+                    ready = false;
                 }
 
-                obj.unbind('__ready'); // now this handler isn't needed any more.
+                // only append suffix to chanId once:
+                if (chanId.length < 6){
+                    chanId += (type === 'ping') ? '-R' : '-L';
+                }
+
+                //unbind ready handler unless we allow reconnecting:
+                if (!cfg.reconnect) {
+                    obj.unbind('__ready');
+                }
+
                 ready = true;
                 debug('ready msg accepted.');
 

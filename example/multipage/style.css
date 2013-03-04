@@ -1,0 +1,22 @@
+body {
+	line-height:1.2;
+}
+h1 {
+	margin:0;
+	padding:0;
+	font-size:1.2em
+}
+.log {
+	background:#ffc;
+	border:1px solid #eeb;
+	padding:0.1em;
+	color:#660;
+}
+
+a {
+	text-decoration:none;
+	color:#33c;
+	display:block;
+}
+a:visited {color:#66C;}
+a:hover {color:#E66}
