@@ -544,8 +544,14 @@
                     // object and pick out all of the functions that were passed as arguments.
                     var callbacks = { };
                     var callbackNames = [ ];
+                    var seen = [ ];
 
                     var pruneFunctions = function (path, obj) {
+                        if (seen.indexOf(obj) >= 0) {
+                            throw "params cannot be a recursive data structure"
+                        }
+                        seen.push(obj);
+                       
                         if (typeof obj === 'object') {
                             for (var k in obj) {
                                 if (!obj.hasOwnProperty(k)) continue;
