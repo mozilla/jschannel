@@ -335,6 +335,27 @@ snippet(function() {
 
 </div>
 
+<div class="child-code-snippet" id="recursive-data-structure"></div>
+
+<p>Be sure you don't pass a recursive data structure as your params, or 
+else you will get an exception.</p>
+
+<script class="doctest">
+snippet(function() {
+  var params = {
+    text: 'test',
+    child: {}
+  };
+  params.child.parent = parent;
+
+  chan.call({method: "recursive",
+             params: params,
+             success: function(v) { emit(v.toString()); }});
+  wait();
+  // expect: Error: params cannot be a recursive data structure
+});
+</script>
+
 <h3>Transactions</h3>
 
 <p>If your method's implementation is asychronous, you'll have to use the transaction object that's automatically passed as the first argument to a remote method, like so:</p>
