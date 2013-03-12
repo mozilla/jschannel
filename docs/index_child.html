@@ -122,5 +122,11 @@ chan.bind("caller_backer", function(trans, params) {
 <script id="echo">
 chan.bind("echo", function(trans, a) { return a });
 </script>
+
+<script id="recursive">
+chan.bind("recursive", function(trans, params) {
+  return params.text;
+}
+</script>
 </body>
 </html>
