@@ -37,8 +37,9 @@
  */
 
 ;var Channel = (function() {
-    "use strict";
+"use strict";
 
+var buildFactory = function buildFactory(window) {
     // current transaction id, start out at a random *odd* number between 1 and a million
     // There is one current transaction counter id per page, and it's shared between
     // channel instances.  That means of all messages posted from a single javascript
@@ -617,4 +618,11 @@
             return obj;
         }
     };
+};
+
+var Channel = buildFactory(window);
+Channel.buildFactory = buildFactory;
+
+return Channel;
+
 })();
