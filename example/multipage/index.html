@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>JSChannel example</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="../../src/jschannel.js"></script>
+</head>
+<body>
+  <h2> JSChannel example: <code>reconnect: true</code></h2>
+  <p>
+    Here's a simple example of how to enable a window to "reconnect"
+    to an existing channel. Normally when the child frame gets reloaded,
+    it looses the connection to its parent. 
+  </p>
+  <p>
+    This is a take on how to provide a solution to this issue. 
+    Added the option <code>reconnect: true|false</code> 
+    (defaults to false) to the <code>Channel.build</code> method in the parent frame.
+  </p>
+
+
+  <iframe class="frame" id="childFrame" src="page1.html"></iframe>
+  <div class="log" id="logger">navigated to: ...</div>
+
+  
+  <p>Oh, and you probably need to be on a server, or localhost for this example to run. file:// doesn't quite cut it.</p>
+  
+  <script>
+    var frameDoc = document.getElementById("childFrame").contentWindow,
+      logger = document.getElementById("logger");
+    
+    var chan = Channel.build({
+      debugOutput: true,
+      window: frameDoc,
+      origin: "*",
+      scope: "testScope",
+      reconnect: true
+    });
+
+    chan.bind("navigate", function(trans, s) {
+      console.log('navigate: ', s);
+      logger.innerHTML = "navigated to: " + s.url;
+    });
+    
+    chan.bind("notify", function(t, s) { 
+      console.log("got notification: ", s); 
+    });
+
+    // invoke the function on our child which will cause him to send us a notification 
+    chan.call({method: "sendNotification", success: function() { } });
+
+  </script>
+</body>
+</html>
