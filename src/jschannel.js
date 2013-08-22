@@ -238,8 +238,15 @@
                 // which flattens arrays into strings! Since we have a working
                 // JSON.stringify we can safely remove it.
                 // See: http://stackoverflow.com/questions/710586/json-stringify-bizarreness
-                console.log("removing Prototype's faulty Array.toJSON")
-                delete Array.prototype.toJSON;
+                console.log("patching Prototype's faulty Array.toJSON")
+                var stringify = window.JSON.stringify;
+                window.JSON.stringify = function(value) {
+                    var _array_tojson = Array.prototype.toJSON;
+                    delete Array.prototype.toJSON;
+                    var r = stringify(value);
+                    Array.prototype.toJSON = _array_tojson;
+                    return r;
+                }
             }
 
             /* basic argument validation */
