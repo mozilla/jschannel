@@ -233,6 +233,21 @@
             if (!window.JSON || !window.JSON.stringify || ! window.JSON.parse) {
                 throw("jschannel cannot run this browser, no JSON parsing/serialization");
             }
+            if (window.Prototype) {
+                // Some versions of Prototype ship with a broken Array.toJSON
+                // which flattens arrays into strings! Since we have a working
+                // JSON.stringify we can safely remove it.
+                // See: http://stackoverflow.com/questions/710586/json-stringify-bizarreness
+                console.log("patching Prototype's faulty Array.toJSON")
+                var stringify = window.JSON.stringify;
+                window.JSON.stringify = function(value) {
+                    var _array_tojson = Array.prototype.toJSON;
+                    delete Array.prototype.toJSON;
+                    var r = stringify(value);
+                    Array.prototype.toJSON = _array_tojson;
+                    return r;
+                }
+            }
 
             /* basic argument validation */
             if (typeof cfg != 'object') throw("Channel build invoked without a proper object argument");
