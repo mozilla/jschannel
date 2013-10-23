@@ -394,9 +394,15 @@
                             if (typeof e === 'string') {
                                 message = e;
                             } else if (typeof e === 'object') {
-                                // either an array or an object
+                                // if it's an Error instance we use the constructor name to set the error property
+                                // and we just copy the error message
+                                if (e instanceof Error) {
+                                    error = e.constructor.name;
+                                    message = e.message;
+                                }
+                                // Otherwise, it's either an array or an object
                                 // * if it's an array of length two, then  array[0] is the code, array[1] is the error message
-                                if (e && s_isArray(e) && e.length == 2) {
+                                else if (e && s_isArray(e) && e.length == 2) {
                                     error = e[0];
                                     message = e[1];
                                 }
