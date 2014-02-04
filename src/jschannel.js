@@ -560,7 +560,7 @@
                                     callbacks[np] = obj[k];
                                     callbackNames.push(np);
                                     delete obj[k];
-                                } else if (typeof obj[k] === 'object') {
+                                } else if (typeof obj[k] === 'object' && obj[k] !== null) {
                                     pruneFunctions(np, obj[k]);
                                 }
                             }
