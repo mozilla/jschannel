@@ -1,0 +1,21 @@
+{
+  "name": "jschannel",
+  "version": "0.0.1",
+  "homepage": "http://mozilla.github.io/jschannel/docs/",
+  "authors": ["Mozilla"],
+  "description": "A JavaScript library which implements fancy IPC semantics on top of postMessage.",
+  "main": "src/jschannel.js",
+  "keywords": [
+    "IPC",
+    "JSON-RPC",
+    "RPC",
+    "postMessage"
+  ],
+  "license": "MPL",
+  "ignore": [
+    "**/.*",
+    "docs",
+    "example",
+    "perf"
+  ]
+}
