@@ -84,7 +84,7 @@
                 exists = hasWin(s_boundChans[origin][scope]);
             }
         }
-        if (exists) throw "A channel is already bound to the same window which overlaps with origin '"+ origin +"' and has scope '"+scope+"'";
+        if (exists) throw new Error("A channel is already bound to the same window which overlaps with origin '"+ origin +"' and has scope '"+scope+"'");
 
         if (typeof s_boundChans[origin] != 'object') s_boundChans[origin] = { };
         if (typeof s_boundChans[origin][scope] != 'object') s_boundChans[origin][scope] = [ ];
@@ -123,7 +123,7 @@
     var s_onMessage = function(e) {
         try {
           var m = JSON.parse(e.data);
-          if (typeof m !== 'object' || m === null) throw "malformed";
+          if (typeof m !== 'object' || m === null) throw new Error("malformed");
         } catch(e) {
           // just ignore any posted messages that do not consist of valid JSON
           return;
@@ -256,11 +256,11 @@
                 }
             }
 
-            if (!validOrigin) throw ("Channel.build() called with an invalid origin");
+            if (!validOrigin) throw new Error("Channel.build() called with an invalid origin");
 
             if (typeof cfg.scope !== 'undefined') {
-                if (typeof cfg.scope !== 'string') throw 'scope, when specified, must be a string';
-                if (cfg.scope.split('::').length > 1) throw "scope may not contain double colons: '::'";
+                if (typeof cfg.scope !== 'string') throw new Error('scope, when specified, must be a string');
+                if (cfg.scope.split('::').length > 1) throw new Error("scope may not contain double colons: '::'");
             }
 
             /* private variables */
@@ -290,11 +290,11 @@
                     origin: origin,
                     invoke: function(cbName, v) {
                         // verify in table
-                        if (!inTbl[id]) throw "attempting to invoke a callback of a nonexistent transaction: " + id;
+                        if (!inTbl[id]) throw new Error("attempting to invoke a callback of a nonexistent transaction: " + id);
                         // verify that the callback name is valid
                         var valid = false;
                         for (var i = 0; i < callbacks.length; i++) if (cbName === callbacks[i]) { valid = true; break; }
-                        if (!valid) throw "request supports no such callback '" + cbName + "'";
+                        if (!valid) throw new Error("request supports no such callback '" + cbName + "'");
 
                         // send callback invocation
                         postMessage({ id: id, callback: cbName, params: v});
@@ -302,7 +302,7 @@
                     error: function(error, message) {
                         completed = true;
                         // verify in table
-                        if (!inTbl[id]) throw "error called for nonexistent message: " + id;
+                        if (!inTbl[id]) throw new Error("error called for nonexistent message: " + id);
 
                         // remove transaction from table
                         delete inTbl[id];
@@ -313,7 +313,7 @@
                     complete: function(v) {
                         completed = true;
                         // verify in table
-                        if (!inTbl[id]) throw "complete called for nonexistent message: " + id;
+                        if (!inTbl[id]) throw new Error("complete called for nonexistent message: " + id);
                         // remove transaction from table
                         delete inTbl[id];
                         // send complete
@@ -471,7 +471,7 @@
             // a small wrapper around postmessage whose primary function is to handle the
             // case that clients start sending messages before the other end is "ready"
             var postMessage = function(msg, force) {
-                if (!msg) throw "postMessage called with null message";
+                if (!msg) throw new Error("postMessage called with null message");
 
                 // delay posting if we're not ready yet.
                 var verb = (ready ? "post  " : "queue ");
@@ -493,7 +493,7 @@
 
             var onReady = function(trans, type) {
                 debug('ready msg received');
-                if (ready) throw "received ready message while in ready state.  help!";
+                if (ready) throw new Error("received ready message while in ready state.  help!");
 
                 if (type === 'ping') {
                     chanId += '-R';
@@ -522,23 +522,23 @@
                 // tries to unbind a bound message handler.  returns false if not possible
                 unbind: function (method) {
                     if (regTbl[method]) {
-                        if (!(delete regTbl[method])) throw ("can't delete method: " + method);
+                        if (!(delete regTbl[method])) throw new Error("can't delete method: " + method);
                         return true;
                     }
                     return false;
                 },
                 bind: function (method, cb) {
-                    if (!method || typeof method !== 'string') throw "'method' argument to bind must be string";
-                    if (!cb || typeof cb !== 'function') throw "callback missing from bind params";
+                    if (!method || typeof method !== 'string') throw new Error("'method' argument to bind must be string");
+                    if (!cb || typeof cb !== 'function') throw new Error("callback missing from bind params");
 
-                    if (regTbl[method]) throw "method '"+method+"' is already bound!";
+                    if (regTbl[method]) throw new Error("method '"+method+"' is already bound!");
                     regTbl[method] = cb;
                     return this;
                 },
                 call: function(m) {
-                    if (!m) throw 'missing arguments to call function';
-                    if (!m.method || typeof m.method !== 'string') throw "'method' argument to call must be string";
-                    if (!m.success || typeof m.success !== 'function') throw "'success' callback missing from call";
+                    if (!m) throw new Error('missing arguments to call function');
+                    if (!m.method || typeof m.method !== 'string') throw new Error("'method' argument to call must be string");
+                    if (!m.success || typeof m.success !== 'function') throw new Error("'success' callback missing from call");
 
                     // now it's time to support the 'callback' feature of jschannel.  We'll traverse the argument
                     // object and pick out all of the functions that were passed as arguments.
@@ -548,7 +548,7 @@
 
                     var pruneFunctions = function (path, obj) {
                         if (seen.indexOf(obj) >= 0) {
-                            throw "params cannot be a recursive data structure"
+                            throw new Error("params cannot be a recursive data structure");
                         }
                         seen.push(obj);
                        
@@ -588,8 +588,8 @@
                     postMessage(msg);
                 },
                 notify: function(m) {
-                    if (!m) throw 'missing arguments to notify function';
-                    if (!m.method || typeof m.method !== 'string') throw "'method' argument to notify must be string";
+                    if (!m) throw new Error('missing arguments to notify function');
+                    if (!m.method || typeof m.method !== 'string') throw new Error("'method' argument to notify must be string");
 
                     // no need to go into any transaction table
                     postMessage({ method: scopeMethod(m.method), params: m.params });
