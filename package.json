@@ -1,0 +1,23 @@
+{
+  "name": "jschannel",
+  "version": "1.0.0",
+  "description": "A JavaScript library which implements fancy IPC semantics on top of postMessage.",
+  "main": "src/jschannel.js",
+  "directories": {
+    "doc": "docs",
+    "example": "example"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mozilla/jschannel.git"
+  },
+  "author": "",
+  "license": "MPL-1.1",
+  "bugs": {
+    "url": "https://github.com/mozilla/jschannel/issues"
+  },
+  "homepage": "https://github.com/mozilla/jschannel#readme"
+}
