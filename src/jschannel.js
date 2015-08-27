@@ -218,7 +218,7 @@
      *                the onReady function will be passed a single argument which is
      *                the channel object that was returned from build().
      */
-    return {
+    var _channel = {
         build: function(cfg) {
             var debug = function(m) {
                 if (cfg.debugOutput && window.console && window.console.log) {
@@ -617,4 +617,19 @@
             return obj;
         }
     };
+
+    if (typeof exports !== 'undefined') {
+        if (typeof module !== 'undefined' && module.exports) {
+            exports = module.exports = _channel;
+        }
+        exports.Channel = _channel;
+    }
+
+    if (typeof define === 'function' && define.amd) {
+        define('jschannel', [], function() {
+            return _channel;
+        });
+    }
+
+    return _channel;
 })();
