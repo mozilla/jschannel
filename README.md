@@ -88,10 +88,10 @@ Full documentation for JSChannel can be found
 
 ## Influences
 
-[JSON-RPC](http://groups.google.com/group/json-rpc/web/json-rpc-2-0)
+[JSON-RPC](http://json-rpc.org/)
 provided some design inspiration for message formats.
 
-The existence of [pmrpc](http://code.google.com/p/pmrpc/) inspired me there's
+The existence of [pmrpc](https://github.com/izuzak/pmrpc) inspired me there's
 room for pure js abstractions in this area.
 
 The API design was influenced by
