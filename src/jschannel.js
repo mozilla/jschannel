@@ -230,7 +230,7 @@
 
             /* browser capabilities check */
             if (!window.postMessage) throw("jschannel cannot run this browser, no postMessage");
-            if (!window.JSON || !window.JSON.stringify || ! window.JSON.parse) {
+            if (!JSON || !JSON.stringify || ! JSON.parse) {
                 throw("jschannel cannot run this browser, no JSON parsing/serialization");
             }
 
@@ -551,7 +551,7 @@
                             throw "params cannot be a recursive data structure"
                         }
                         seen.push(obj);
-                       
+
                         if (typeof obj === 'object') {
                             for (var k in obj) {
                                 if (!obj.hasOwnProperty(k)) continue;
