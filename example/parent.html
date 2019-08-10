@@ -56,8 +56,14 @@ Next, here&apos;s error handling:
 Next, here&apos;s notification output:
 <div class="output" id="output3"></div>
 
-Finally, here&apos;s callback invocation output:
+Now, here&apos;s callback invocation output:
 <div class="output" id="output4"></div>
+
+Next, here&apos;s error handling in case of method not bound yet:
+<div class="output" id="output5"></div>
+
+Finally, let&apos;s try to call the same method after it has been bound:
+<div class="output" id="output6"></div>
 
 <iframe style="display: none;" id="childId" src="child.html"></iframe>
 </body>
@@ -121,6 +127,23 @@ chan.call({
     success: function(v) { docLog(4, "charify all done!" ); }
 });
 
+// let's try to invoke a method that has yet not been bound to channel
+docLog(5, "invoking reverse method with args 'hello world!' to method 'delayedReverse' which is not yet bound to channel");
+function callDelayedReverse(id) {
+  chan.call({
+    method: "delayedReverse",
+    params: "hello world!",
+    error: function(error, message) { docLog(id, "ERROR: " + error + " (" + message + ")"); },
+    success: function(v) {
+        docLog(id, "function returns: '" + v + "'" );
+    }
+  });
+}
+callDelayedReverse(5);
+
+// let's try to invoke the same method after it has been bound (wait 1sec)
+docLog(6, "invoking reverse method with args 'hello world!' to method 'delayedReverse' which is now bound to channel (wait 1sec)");
+setTimeout(function(){callDelayedReverse(6)}, 1000);
 
 </script>
 </html>
