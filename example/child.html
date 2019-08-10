@@ -28,6 +28,15 @@ chan.bind("charify", function(trans, a) {
     a.parseComplete();
 });
 
+setTimeout(function(){
+    chan.bind("delayedReverse", function(trans, s) {
+        if (typeof s !== 'string') {
+            throw [ "invalid_arguments", 'argument to reverse function should be a string' ];
+        }
+        return s.split("").reverse().join("");
+    });
+}, 500)
+
 </script>
 </head>
 </html>
