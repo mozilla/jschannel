@@ -43,43 +43,47 @@ document in an iframe (child.html) and invokes a function on her.
 
 ### parent.html
 
-    <html>
-    <head><script src="src/jschannel.js"></script></head>
-    <body>
-    <iframe id="childId" src="child.html"></iframe>
-    </body>
-    <script>
-    
-    var chan = Channel.build({
-        window: document.getElementById("childId").contentWindow,
-        origin: "*",
-        scope: "testScope"
-    });
-    chan.call({
-        method: "reverse",
-        params: "hello world!",
-        success: function(v) {
-            console.log(v);
-        }
-    });
-    
-    </script>
-    </html>
+```html
+<html>
+<head><script src="src/jschannel.js"></script></head>
+<body>
+<iframe id="childId" src="child.html"></iframe>
+</body>
+<script>
+
+var chan = Channel.build({
+    window: document.getElementById("childId").contentWindow,
+    origin: "*",
+    scope: "testScope"
+});
+chan.call({
+    method: "reverse",
+    params: "hello world!",
+    success: function(v) {
+        console.log(v);
+    }
+});
+
+</script>
+</html>
+```
 
 ### child.html
 
-    <html><head>
-    <script src="src/jschannel.js"></script>
-    <script>
-    
-    var chan = Channel.build({window: window.parent, origin: "*", scope: "testScope"});
-    chan.bind("reverse", function(trans, s) {
-        return s.split("").reverse().join("");
-    });
-    
-    </script>
-    </head>
-    </html>
+```html
+<html><head>
+<script src="src/jschannel.js"></script>
+<script>
+
+var chan = Channel.build({window: window.parent, origin: "*", scope: "testScope"});
+chan.bind("reverse", function(trans, s) {
+    return s.split("").reverse().join("");
+});
+
+</script>
+</head>
+</html>
+```
 
 ## Documentation
 
